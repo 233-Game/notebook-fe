@@ -2,6 +2,7 @@ import Router from '@/router'
 export default {
   // userInfo:localStorage.getItem("userInfo"),
   userInfo: {
+    id: 1,
     name: 'Jack',
     //头像
     avatar: '',

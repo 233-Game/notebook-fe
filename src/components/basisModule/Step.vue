@@ -4,7 +4,8 @@
       v-for="(item, index) in stepItem"
       :key="index"
       :class="{ active: isActive === item.id }"
-      class="flex_JCenter stepItem"
+      class="stepItem"
+      :style="{ height: stepHeight }"
     >
       <!--  描述-->
       <div class="describe">
@@ -62,6 +63,8 @@ export default {
 
 .stepItem {
   position: relative;
+  display: flex;
+  align-items: flex-start;
 }
 
 .step {
@@ -85,15 +88,13 @@ export default {
 }
 
 .linnAndCircle {
-  position: relative;
-  left: 10%;
+  position: absolute;
+  right: 10px;
 }
 
 .describe {
-  position: absolute;
-  top: -5px;
-  left: -10px;
-  width: 60px;
+  margin: -5px 0 0 0;
+  width: 70%;
   font-size: 12px;
   line-height: 20px;
 

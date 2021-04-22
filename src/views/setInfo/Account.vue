@@ -125,7 +125,6 @@ export default {
 
 <style lang="scss" scoped>
 @import '../../../static/style/base';
-@import '../../../static/style/setPanel';
 // 自定义头像
 .photo {
   width: 45px;
@@ -148,7 +147,7 @@ export default {
 .basicInfo {
   margin: 20px 0 0 0;
   width: calc(100% - 40px);
-  height: $panelHeight/2;
+  height: 50%;
   background-color: #fff;
   padding: 20px;
 

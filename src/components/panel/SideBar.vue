@@ -26,7 +26,13 @@
           content="新建笔记"
           placement="right"
         >
-          <el-button class="elBtn" icon="el-icon-plus" circle></el-button>
+          <el-button
+            class="elBtn"
+            icon="el-icon-plus"
+            circle
+            :class="isCheck === 0 ? 'isCheckBtn' : ''"
+            @click="checkBtn(0)"
+          ></el-button>
         </el-tooltip>
       </el-row>
     </div>
@@ -37,13 +43,15 @@
           :hide-after="0"
           class="item"
           effect="dark"
-          content="快捷方式"
+          content="文件夹"
           placement="right"
         >
           <el-button
             class="elBtn"
             icon="el-icon-folder-opened"
             circle
+            :class="isCheck === 1 ? 'isCheckBtn' : ''"
+            @click="checkBtn(1)"
           ></el-button>
         </el-tooltip>
 
@@ -54,7 +62,13 @@
           content="笔记"
           placement="right"
         >
-          <el-button class="elBtn" icon="el-icon-document" circle></el-button>
+          <el-button
+            class="elBtn"
+            icon="el-icon-document"
+            circle
+            :class="isCheck === 2 ? 'isCheckBtn' : ''"
+            @click="checkBtn(2)"
+          ></el-button>
         </el-tooltip>
 
         <el-tooltip
@@ -64,7 +78,13 @@
           content="笔记本"
           placement="right"
         >
-          <el-button class="elBtn" icon="el-icon-reading" circle></el-button>
+          <el-button
+            class="elBtn"
+            icon="el-icon-reading"
+            circle
+            :class="isCheck === 3 ? 'isCheckBtn' : ''"
+            @click="checkBtn(3)"
+          ></el-button>
         </el-tooltip>
 
         <el-tooltip
@@ -74,38 +94,51 @@
           content="标签"
           placement="right"
         >
-          <el-button class="elBtn" icon="el-icon-discount" circle></el-button>
+          <el-button
+            class="elBtn"
+            icon="el-icon-discount"
+            circle
+            :class="isCheck === 4 ? 'isCheckBtn' : ''"
+            @click="checkBtn(4)"
+          ></el-button>
         </el-tooltip>
       </el-row>
     </div>
   </div>
 </template>
 <script>
-import { mapGetters } from 'vuex'
 import { reactive } from 'vue'
+import { getMap } from '../../../common/setStore'
 
 export default {
   name: 'SideBar',
   data() {
-    return {}
+    return {
+      isCheck: 2,
+    }
   },
   created() {
     //  获取用户信息
     this.getUserInfo()
   },
   computed: {
-    ...mapGetters(['getTheme']),
     cssVars() {
       // 状态管理修改颜色==
       return {
-        '--font_color': this.getTheme.IconFontColor,
-        '--theme_color': this.getTheme.ThemeColor,
+        '--font_color': getMap('IconFontColor'),
+        '--theme_color': getMap('ThemeColor'),
+        '--icon_font_bgc': getMap('IconFontBGC'),
+        '--icon_border_color': getMap('IconBorderColor'),
       }
     },
   },
   methods: {
     setUser() {
       this.$emit('setUsePanel')
+    },
+    checkBtn(index) {
+      this.isCheck = index
+      this.$emit('tapSideBar', index)
     },
   },
   setup() {
@@ -127,7 +160,7 @@ export default {
   },
 }
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
 @import '../../../static/style/base';
 
 .SideBar {
@@ -137,8 +170,8 @@ export default {
   height: calc(100vh - 10px);
   background-color: var(--theme_color);
   padding-top: 15px;
+  z-index: 35;
 }
-
 // 自定义头像
 .photo {
   width: 45px;
@@ -160,6 +193,18 @@ export default {
     margin: 10px 0;
     font-size: 19px;
     color: var(--font_color);
+  }
+  .elBtn:hover {
+    background-color: var(--icon_font_bgc);
+    border-color: var(--icon_border_color);
+  }
+  .isCheckBtn {
+    background-color: var(--icon_font_bgc) !important;
+    border-color: var(--icon_border_color) !important;
+  }
+  .el-button:focus {
+    border-color: #dfe1e8;
+    background-color: #ffffff;
   }
 }
 </style>

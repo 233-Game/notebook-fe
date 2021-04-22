@@ -3,8 +3,8 @@
     <div class="side_U">
       <el-radio-group
         v-model="radio"
-        :fill="getTheme.BtnFillColor"
-        :text-color="getTheme.BtnFontColor"
+        :fill="BtnFillColor"
+        :text-color="BtnFontColor"
       >
         <el-radio-button
           @change="componentsSkip('Account')"
@@ -48,13 +48,13 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 import { reactive } from 'vue'
 import Account from '@/views/setInfo/Account'
 import AccountSafe from '@/views/setInfo/accountSafe/AccountSafe'
 import Help from '@/views/setInfo/Help'
 import Set from '@/views/setInfo/Set'
 import ImportAndExport from '@/views/setInfo/ImportAndExport'
+import { getMap } from '../../../common/setStore'
 
 export default {
   name: 'UserInfoPanel',
@@ -74,12 +74,20 @@ export default {
     ImportAndExport,
   },
   computed: {
-    ...mapGetters(['getTheme']),
     cssVars() {
-      // 状态管理修改颜色==
-      return {
-        '--theme_color': this.getTheme.ThemeColor,
-      }
+      const windowWidth = document.body.clientWidth
+      if (windowWidth <= 1250)
+        return { '--varWidth': '65vw', '--theme_color': getMap('ThemeColor') }
+      else if (windowWidth <= 1500)
+        return { '--varWidth': '55vw', '--theme_color': getMap('ThemeColor') }
+      else
+        return { '--varWidth': '40vw', '--theme_color': getMap('ThemeColor') }
+    },
+    BtnFillColor() {
+      return getMap('BtnFillColor')
+    },
+    BtnFontColor() {
+      return getMap('BtnFontColor')
     },
   },
   setup() {
@@ -117,12 +125,11 @@ export default {
 }
 </script>
 <style lang="scss">
-@import '../../../static/style/setPanel';
 @import '../../../static/style/base';
 
 .panel_U {
-  width: $panelWidth;
-  height: $panelHeight;
+  width: var(--varWidth);
+  height: 50vh;
   box-shadow: 0 0 20px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -138,7 +145,7 @@ export default {
   flex: 1;
   width: 100px;
   height: calc(100% - 66px);
-  padding: 33px 40px;
+  padding: 33px 30px;
   background-color: var(--theme_color);
 }
 

@@ -110,7 +110,7 @@ export default {
 }
 
 .passwordInput {
-  padding: 10px 0;
+  margin: 10px 0;
 }
 
 .btnPassword {

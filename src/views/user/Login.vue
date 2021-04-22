@@ -1,6 +1,6 @@
 <template>
   <div class="vLogin">
-    <div class="card">
+    <div class="card" :style="cssVars">
       <!--      logo-->
       <div class="logo"></div>
       <!--      登录框-->
@@ -63,6 +63,10 @@
               <i v-if="loading" class="el-icon-loading"></i>
             </el-button>
           </el-form-item>
+          <div class="otherLoginText flex_ACenter_Jcenter">
+            <div class="line"></div>
+            <div class="loginText">第三方登录</div>
+          </div>
           <div class="otherLogin flex_ACenter">
             <img src="../../../static/svg/wx.svg" alt="" />
             <img src="../../../static/svg/weibo.svg" alt="" />
@@ -75,6 +79,8 @@
 </template>
 
 <script>
+import servers from '@/api/userApi'
+
 export default {
   name: 'Login',
   data() {
@@ -94,25 +100,34 @@ export default {
       passOrVerify: '验证码登录',
     }
   },
+  setup() {
+    function login() {
+      servers.userLogin('login', {
+        phone: this.phoneNum,
+        password: this.password || this.verifyCode,
+      })
+    }
+    return { login }
+  },
   methods: {
     //记住密码
     rePassword() {
       //  将密码存储到本地
-      this.$config.setStorage(`noteBook_${this.phoneNum}`, this.password)
+      this.$commonFun.setStorage(`noteBook_${this.phoneNum}`, this.password)
     },
     //  登录
     submit() {
       if (this.rememberPass) {
         this.rePassword()
       }
-      console.log('登录')
+      this.login()
     },
     //  获取验证码
     getVerifyCode() {
       let code = 60
       this.verifyTip = code
+      this.verifyIsDisabled = true
       let time = setInterval(() => {
-        this.verifyIsDisabled = true
         code -= 1
         this.verifyTip = code
         if (code === 0) {
@@ -128,6 +143,14 @@ export default {
       this.isVerify
         ? (this.passOrVerify = '账号密码登录')
         : (this.passOrVerify = '验证码登录')
+    },
+  },
+  computed: {
+    cssVars() {
+      const windowWidth = document.body.clientWidth
+      if (windowWidth <= 1200) return { '--varWidth': '70vw' }
+      else if (windowWidth <= 1500) return { '--varWidth': '60vw' }
+      else return { '--varWidth': '45vw' }
     },
   },
 }
@@ -146,8 +169,8 @@ export default {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -60%);
-    width: 40vw;
-    height: 50vh;
+    width: var(--varWidth);
+    height: 60vh;
     box-shadow: 3px 5px 20px 3px rgba(0, 0, 0, 0.5);
     border-radius: 5px;
   }
@@ -160,13 +183,14 @@ export default {
   }
 
   .loginBox {
-    width: calc(40% - 40px);
-    height: calc(100% - 80px);
+    width: 40%;
+    height: 100%;
+    box-sizing: border-box;
     padding: 40px 20px;
   }
   .formInput {
-    margin-top: 70%;
-    transform: translateY(-50%);
+    margin: 10% 0;
+    transform: translateY(0);
   }
   .el-card {
     //   background-color: #f3f3f3;
@@ -252,6 +276,24 @@ export default {
     img {
       width: 40px;
       height: 40px;
+    }
+  }
+  .otherLoginText {
+    width: 100%;
+    margin: 20px auto;
+    height: 30px;
+    .line {
+      position: absolute;
+      width: 90%;
+      height: 0;
+      border-top: 1px solid #cccccc;
+      z-index: -1;
+    }
+    .loginText {
+      padding: 10px 5px;
+      background-color: #fff;
+      color: #666666;
+      font-size: 14px;
     }
   }
 }
