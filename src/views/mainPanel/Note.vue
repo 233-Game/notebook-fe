@@ -18,7 +18,7 @@
               <i class="el-icon-arrow-down"></i>
             </div>
           </template>
-          <ul class="optionCard" :style="cssVar">
+          <ul class="optionCard userSelect" :style="cssVar">
             <li class="optionLi" v-for="(li, indexLi) in sortLi" :key="indexLi">
               {{ li }}
             </li>
@@ -26,16 +26,18 @@
         </el-popover>
       </div>
       <scroll
+        ref="scroll"
         v-if="noteList.length > 0"
         :scrollWidth="computedWidth"
         scroll-height="calc(100vh - 130px)"
-        class="scroll"
-        @pullLoad="pullLoad"
-        @pullRush="pullRush"
+        class="better-scroll"
+        @pullLoad="pullUpLoad"
+        @pullRush="pullDownRush"
         @searchNote="searchNote"
+        :loading="loading"
       >
         <template v-slot:scrollContent>
-          <transition-group name="bounce">
+          <transition-group name="note">
             <div
               class="noteList"
               :class="isCheckNote === index ? 'checkNote' : ''"
@@ -94,7 +96,7 @@
         </template>
       </scroll>
       <!--      当没有笔记时提醒-->
-      <div v-else></div>
+      <el-empty v-else description="点击 + 号，添加笔记"></el-empty>
     </div>
     <!--    右侧编辑栏-->
     <div class="editNote">
@@ -161,11 +163,21 @@ export default {
         { id: 3, title: 'vue', content: 'v', time: '4天前', collect: 1 },
         { id: 4, title: 'jq', content: 'q', time: '4天前', collect: 0 },
         { id: 5, title: 'node', content: 'p', time: '4天前', collect: 1 },
+        { id: 1, title: 'react', content: 'r', time: '4天前', collect: 1 },
+        { id: 2, title: 'js', content: 'j', time: '4天前', collect: 0 },
+        { id: 3, title: 'vue', content: 'v', time: '4天前', collect: 1 },
+        { id: 4, title: 'jq', content: 'q', time: '4天前', collect: 0 },
+        { id: 5, title: 'node', content: 'p', time: '4天前', collect: 1 },
+        { id: 1, title: 'react', content: 'r', time: '4天前', collect: 1 },
+        { id: 2, title: 'js', content: 'j', time: '4天前', collect: 0 },
+        { id: 3, title: 'vue', content: 'v', time: '4天前', collect: 1 },
+        { id: 4, title: 'jq', content: 'q', time: '4天前', collect: 0 },
+        { id: 5, title: 'node', content: 'p', time: '4天前', collect: 1 },
       ],
       //选中笔记的样式 需要編輯的筆記的index
-      isCheckNote: 0,
-      //  笔记移出动画
-      isMove: -1,
+      isCheckNote: this.$eNum.isCheckNoteDefault,
+      //  下拉刷新的加载图标
+      loading: false,
     }
   },
   setup() {
@@ -218,12 +230,19 @@ export default {
   },
   methods: {
     //上拉加载
-    pullLoad(that) {
-      console.log(that)
+    pullUpLoad() {
+      setTimeout(() => {
+        this.$refs.scroll.closePullUp()
+      }, 1000)
     },
     // 下拉刷新
-    pullRush(that) {
-      console.log(that)
+    pullDownRush() {
+      this.loading = !this.loading
+      setTimeout(() => {
+        //调用关闭下拉刷新动作
+        this.$refs.scroll.closePullDown()
+        this.loading = !this.loading
+      }, 1000)
     },
     //搜索
     searchNote(searchValue) {
@@ -246,18 +265,34 @@ export default {
     onOpera(num, index) {
       switch (num) {
         case 0:
+          //分享
           console.log('分享')
           break
         case 1:
+          //收藏
           this.noteList[index].collect === 1
             ? (this.noteList[index].collect = 0)
             : (this.noteList[index].collect = 1)
           break
         case 2:
+          //删除
           this.noteList.splice(index, 1)
-
-          this.isMove = index
-          // console.log('删除')
+          //判断删除的索引值是否在选中索引之前
+          if (this.isCheckNote > index) {
+            //  在，将当前选中的索引值减1
+            this.isCheckNote -= 1
+          }
+          //判断要删除的笔记是否是当前选中的
+          else if (this.isCheckNote === index) {
+            //是，则选中该索引的前一个
+            this.isCheckNote =
+              this.isCheckNote - 1 < 0 ? 0 : this.isCheckNote - 1
+          }
+          setTimeout(() => {
+            this.$refs.scroll.defineFun((that) => {
+              that.refresh()
+            })
+          }, 500)
           break
       }
     },
@@ -291,10 +326,6 @@ export default {
     right: 20px;
     cursor: pointer;
     vertical-align: middle;
-  }
-  .scroll {
-    box-shadow: none !important;
-    border-top: none !important;
   }
 }
 .optionCard {
@@ -366,15 +397,15 @@ export default {
 .el-popover {
   padding: 0 !important;
 }
-.bounce-leave-to {
+.note-leave-to {
   opacity: 0;
   transform: translateX(-80px);
 }
-.bounce-leave-active {
+.note-leave-active {
   transition: all 0.5s ease;
   position: absolute;
 }
-.bounce-move {
+.note-move {
   transition: all 0.5s ease;
 }
 </style>

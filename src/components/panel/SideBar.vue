@@ -12,94 +12,26 @@
 
       <!-- 自定义头像 -->
       <div v-else class="photo">
-        <img :src="userInfo.avatar" alt="" />
+        <img :src="webUrl + userInfo.avatar" alt="" />
       </div>
     </div>
 
-    <!-- 主要功能 -->
-    <div class="mainFunction flex_column_ACenter">
-      <el-row class="flex_column_ACenter">
+    <!-- 功能按键 -->
+    <div class="mainFunction">
+      <el-row v-for="(btn, index) in sideBarList" :key="index">
         <el-tooltip
           :hide-after="0"
           class="item"
           effect="dark"
-          content="新建笔记"
+          :content="btn.tipMsg"
           placement="right"
         >
           <el-button
             class="elBtn"
-            icon="el-icon-plus"
+            :icon="btn.icon"
             circle
-            :class="isCheck === 0 ? 'isCheckBtn' : ''"
-            @click="checkBtn(0)"
-          ></el-button>
-        </el-tooltip>
-      </el-row>
-    </div>
-    <!-- 辅助功能 -->
-    <div class="mainFunction flex_column_ACenter">
-      <el-row class="flex_column_ACenter" style="fontsize: 30px">
-        <el-tooltip
-          :hide-after="0"
-          class="item"
-          effect="dark"
-          content="文件夹"
-          placement="right"
-        >
-          <el-button
-            class="elBtn"
-            icon="el-icon-folder-opened"
-            circle
-            :class="isCheck === 1 ? 'isCheckBtn' : ''"
-            @click="checkBtn(1)"
-          ></el-button>
-        </el-tooltip>
-
-        <el-tooltip
-          :hide-after="0"
-          class="item"
-          effect="dark"
-          content="笔记"
-          placement="right"
-        >
-          <el-button
-            class="elBtn"
-            icon="el-icon-document"
-            circle
-            :class="isCheck === 2 ? 'isCheckBtn' : ''"
-            @click="checkBtn(2)"
-          ></el-button>
-        </el-tooltip>
-
-        <el-tooltip
-          :hide-after="0"
-          class="item"
-          effect="dark"
-          content="笔记本"
-          placement="right"
-        >
-          <el-button
-            class="elBtn"
-            icon="el-icon-reading"
-            circle
-            :class="isCheck === 3 ? 'isCheckBtn' : ''"
-            @click="checkBtn(3)"
-          ></el-button>
-        </el-tooltip>
-
-        <el-tooltip
-          :hide-after="0"
-          class="item"
-          effect="dark"
-          content="标签"
-          placement="right"
-        >
-          <el-button
-            class="elBtn"
-            icon="el-icon-discount"
-            circle
-            :class="isCheck === 4 ? 'isCheckBtn' : ''"
-            @click="checkBtn(4)"
+            :class="currentBtnIndex === index ? 'isCheckBtn' : ''"
+            @click="checkBtn(index)"
           ></el-button>
         </el-tooltip>
       </el-row>
@@ -114,7 +46,9 @@ export default {
   name: 'SideBar',
   data() {
     return {
-      isCheck: 2,
+      currentBtnIndex: this.$eNum.sideBtnDefault,
+      //网络根路径
+      webUrl: process.env.VUE_APP_PROXY_PATH,
     }
   },
   created() {
@@ -137,7 +71,7 @@ export default {
       this.$emit('setUsePanel')
     },
     checkBtn(index) {
-      this.isCheck = index
+      this.currentBtnIndex = index
       this.$emit('tapSideBar', index)
     },
   },
@@ -145,6 +79,14 @@ export default {
     const userInfo = reactive({
       userInfo: {},
     })
+    //左边功能按钮集
+    const sideBarList = reactive([
+      { tipMsg: '新建笔记', icon: 'el-icon-plus' },
+      { tipMsg: '文件夹', icon: 'el-icon-folder-opened' },
+      { tipMsg: '笔记', icon: 'el-icon-document' },
+      { tipMsg: '笔记本', icon: 'el-icon-reading' },
+      { tipMsg: '标签', icon: 'el-icon-discount' },
+    ])
 
     //  获取用户信息
     function getUserInfo() {
@@ -156,6 +98,7 @@ export default {
     return {
       userInfo,
       getUserInfo,
+      sideBarList,
     }
   },
 }
@@ -188,7 +131,9 @@ export default {
 // 主要功能
 .mainFunction {
   margin-top: 50px;
-
+  .el-row:first-child {
+    margin-bottom: 50px;
+  }
   .elBtn {
     margin: 10px 0;
     font-size: 19px;

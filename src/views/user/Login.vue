@@ -1,5 +1,5 @@
 <template>
-  <div class="vLogin">
+  <div class="vLogin userSelect">
     <div class="card" :style="cssVars">
       <!--      logo-->
       <div class="logo"></div>
@@ -21,7 +21,6 @@
               :prefix-icon="icon"
               v-model="password"
               class="inner"
-              maxlength="16"
               placeholder="密码"
               type="password"
               @focus="icon = 'el-icon-unlock'"
@@ -96,29 +95,57 @@ export default {
       isVerify: false,
       verifyCode: '',
       verifyTip: '获取验证码',
+      //判断获取验证码按钮是否可点
       verifyIsDisabled: false,
       passOrVerify: '验证码登录',
     }
   },
   setup() {
     function login() {
-      servers.userLogin('login', {
-        phone: this.phoneNum,
-        password: this.password || this.verifyCode,
-      })
+      this.loading = true
+      servers
+        .userLogin(
+          {
+            phone: this.phoneNum,
+            password: this.password || this.verifyCode,
+            remember_me: this.rememberPass,
+          },
+          this.password === '' ? 'verifyCode' : 'password'
+        )
+        .then((res) => {
+          this.setLocalStorageUserInfo(res.data.data)
+        })
+        .catch(() => {
+          this.loading = false
+        })
     }
     return { login }
+  },
+  created() {
+    //  判断本地是否有最近一次登录记录
+    let animalsId = this.$commonFun.getStorage('animalsId')
+    let password = this.$commonFun.getStorage('animalsPassword_' + animalsId)
+    let animalsRememberPass = this.$commonFun.getStorage('animalsRememberPass')
+    if (animalsId) {
+      this.phoneNum = animalsId
+    }
+    if (password) {
+      this.password = password
+    }
+    animalsRememberPass === 'true'
+      ? (this.rememberPass = true)
+      : (this.rememberPass = false)
   },
   methods: {
     //记住密码
     rePassword() {
-      //  将密码存储到本地
-      this.$commonFun.setStorage(`noteBook_${this.phoneNum}`, this.password)
+      this.$commonFun.setStorage('animalsRememberPass', this.rememberPass)
     },
     //  登录
     submit() {
-      if (this.rememberPass) {
-        this.rePassword()
+      //判断是否填入密码或验证码
+      if (this.password === '' && this.verifyCode === '') {
+        this.$config.__message('请输入验证码或密码')
       }
       this.login()
     },
@@ -136,13 +163,50 @@ export default {
           this.verifyIsDisabled = false
         }
       }, 1000)
+      servers
+        .getVerifyCode({
+          phone: this.phoneNum,
+          type: 'login',
+        })
+        .then((res) => {
+          console.log(res)
+        })
     },
-    //  设置短信还是密码·
+    //  设置短信还是密码
     isUseVerify() {
       this.isVerify = !this.isVerify
-      this.isVerify
-        ? (this.passOrVerify = '账号密码登录')
-        : (this.passOrVerify = '验证码登录')
+      if (this.isVerify) {
+        this.passOrVerify = '账号密码登录'
+        this.rememberPass = false
+      } else {
+        this.passOrVerify = '验证码登录'
+        this.rememberPass = true
+      }
+      this.$commonFun.setStorage('animalsRememberPass', this.rememberPass)
+      this.password = ''
+      this.verifyCode = ''
+    },
+    //  登录成功，设置本地存储
+    setLocalStorageUserInfo(data) {
+      //设置状态信息
+      this.$commonFun.setStorage('animalsUserInfo', JSON.stringify(data.user))
+      this.$commonFun.setStorage('token', 'Bearer ' + data.token)
+      this.$user.setUserInfo()
+      this.loading = false
+      //跳转到index
+      this.$router.push('/index')
+      //将该账号存储在本地方便下次登录
+      this.$commonFun.setStorage('animalsId', this.phoneNum)
+      //  判断是否是记住密码
+      if (this.rememberPass) {
+        //  将remember_token存储到本地
+        this.$commonFun.setStorage(
+          `animalsPassword_${this.phoneNum}`,
+          data.remember_token
+        )
+      } else {
+        this.$commonFun.removeStorage(`animalsPassword_${this.phoneNum}`)
+      }
     },
   },
   computed: {

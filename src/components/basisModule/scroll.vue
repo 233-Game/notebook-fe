@@ -104,11 +104,13 @@ export default {
     //初始化scroll
     initScroll() {
       this.scroll = this.$config.__init_scroll(this.$refs.wrapper)
+      //开启下拉刷新
       this.$config.__pulling(this.scroll, 'pullingDown', () => {
-        this.$emit('pullRush', this.scroll)
+        this.$emit('pullRush')
       })
+      //开启上拉加载
       this.$config.__pulling(this.scroll, 'pullingUp', () => {
-        this.$emit('pullLoad', this.scroll)
+        this.$emit('pullLoad')
       })
     },
     //  搜索
@@ -116,10 +118,24 @@ export default {
       this.$emit('searchNote', this.searchValue)
       this.searchValue = ''
     },
+    //结束下拉刷新动作
+    closePullDown() {
+      this.scroll.finishPullDown()
+    },
+    //结束上拉加载动作
+    closePullUp() {
+      this.scroll.finishPullUp()
+    },
     //  选中列表
     checkItem(index, id) {
       this.checkNoteBook = index
       this.$emit('checkNoteBook', id)
+    },
+    // 子组件自定义使用方法
+    defineFun(callback = '') {
+      if (callback) {
+        callback(this.scroll)
+      }
     },
   },
 }
@@ -195,7 +211,7 @@ export default {
     display: inline-block;
     position: absolute;
     top: 70px;
-    width: 400px;
+    width: 100%;
     text-align: center;
     z-index: 10;
     font-size: 20px;

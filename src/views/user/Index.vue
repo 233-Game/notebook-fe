@@ -1,5 +1,5 @@
 <template>
-  <div class="index">
+  <div class="index userSelect">
     <side-bar
       ref="SideBarMethod"
       @setUsePanel="setUsePanel"
@@ -124,20 +124,34 @@ export default {
     },
     //  判断现在是哪个路由，修改SideBar组件中按钮的样式
     //el:哪个按钮
-    changSidBarClass(el) {
+    changSidBarClass(el, drawer = '') {
       if (el === false) {
         let path = this.$router.currentRoute.value.name
         switch (path) {
           case 'Note':
-            this.$refs.SideBarMethod.isCheck = 2
+            this.$refs.SideBarMethod.currentBtnIndex = 2
             break
           case 'addNote':
-            this.$refs.SideBarMethod.isCheck = 0
+            this.$refs.SideBarMethod.currentBtnIndex = 0
             break
         }
-        this.noteBookDrawer = false
-        this.signDrawer = false
-        this.shortDrawer = false
+      }
+      if (drawer) {
+        this.sonComCloseDrawer(drawer)
+      }
+    },
+    //  其他子组件关闭某个drawer
+    sonComCloseDrawer(drawer) {
+      switch (drawer) {
+        case 'NoteBook':
+          this.noteBookDrawer = false
+          break
+        case 'Sign':
+          this.signDrawer = false
+          break
+        case 'ShortCut':
+          this.shortDrawer = false
+          break
       }
     },
   },

@@ -9,7 +9,23 @@
       @close="closeDrawer"
     >
       <template v-slot:title>
-        <slot name="title"></slot>
+        <slot name="title">
+          <div class="header">
+            <span class="color_87 font_size_18">{{ headTitle }}</span>
+            <span class="font_size">{{ listNum }}</span>
+            <i class="color_87 font_size_18 add_book_icon">
+              <svg
+                class="icon"
+                aria-hidden="true"
+                v-for="(item, index) in rightBtn"
+                :key="index"
+                @click="iconOperate(index)"
+              >
+                <use :xlink:href="item"></use>
+              </svg>
+            </i>
+          </div>
+        </slot>
       </template>
       <slot></slot>
     </el-drawer>
@@ -23,6 +39,18 @@ export default {
     drawer: {
       default: false,
       type: Boolean,
+    },
+    headTitle: {
+      default: '',
+      type: String,
+    },
+    listNum: {
+      default: '',
+      type: String,
+    },
+    rightBtn: {
+      default: null,
+      type: Array,
     },
   },
   data() {
@@ -41,6 +69,9 @@ export default {
     closeDrawer() {
       this.$emit('closeDrawer')
     },
+    iconOperate(index) {
+      this.$emit('iconOperate', index)
+    },
   },
 }
 </script>
@@ -48,6 +79,19 @@ export default {
 <style lang="scss">
 .drawer {
   height: 100vh;
+}
+.header {
+  position: relative;
+  height: 50px;
+}
+.add_book_icon {
+  position: absolute;
+  right: 0;
+
+  .icon {
+    margin: 0 10px;
+    cursor: pointer;
+  }
 }
 .el-drawer.ltr {
   margin-left: 100px !important;
