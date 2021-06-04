@@ -102,7 +102,7 @@ export default {
       //  scroll
       scroll: null,
       //  选中的noteBook
-      checkNoteBook: 0,
+      checkNoteBook: null,
     }
   },
   mounted() {
@@ -139,7 +139,7 @@ export default {
     closePullUp() {
       this.scroll.finishPullUp()
     },
-    //  选中列表
+    //  点击选中列表
     checkItem(index, id) {
       this.checkNoteBook = index
       this.$emit('checkNoteBook', id)
@@ -153,6 +153,14 @@ export default {
     //  创建笔记本
     createNoteBook() {
       this.$emit('createNoteBook')
+    },
+    //  将该笔记绑定的笔记本放置在第一位
+    topNoteBook(noteBookId) {
+      this.list.forEach((item, index) => {
+        if (item.id === noteBookId) {
+          this.checkNoteBook = index
+        }
+      })
     },
   },
 }

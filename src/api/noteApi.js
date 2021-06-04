@@ -16,11 +16,6 @@ export default class noteServe {
   static collectNote(params = {}) {
     return request.post('', params)
   }
-  //  移动标记<缺url>
-  static toSign(noteId, signId) {
-    let url = `/[url]?noteId=${noteId}&noteBookId=${signId}`
-    return request.post('', url)
-  }
   //  获取单个笔记详情
   static getNoteContent(noteId) {
     let url = `/source/${noteId}`

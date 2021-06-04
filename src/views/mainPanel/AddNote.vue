@@ -32,21 +32,18 @@
           content="移动笔记"
           placement="bottom"
         >
-          <i
-            class="el-icon-arrow-down icon"
-            @click="isMoveNote = !isMoveNote"
-          ></i>
+          <i class="el-icon-arrow-down icon" @click="choseNoteBook()"></i>
         </el-tooltip>
         <!--    移动笔记-->
         <Scroll
-          v-if="isMoveNote"
+          ref="scroll"
+          v-show="isMoveNote"
           class="moveNote"
           :loading="loading"
           :list="noteBookList"
           scroll-width="400px"
           scroll-height="600px"
           @pullLoad="pullLoad"
-          @pullRush="pullRush"
           @searchNote="searchNote"
           @checkNoteBook="checkNoteBook"
           @createNoteBook="createNoteBook"
@@ -115,7 +112,7 @@
       @definite="definiteChangeNote()"
     >
       <input
-        v-model="headTitle"
+        v-model="title"
         placeholder="请输入文件夹名"
         maxlength="25"
         type="text"
@@ -169,16 +166,6 @@ export default {
       default: -1,
       type: Number,
     },
-    //标题名
-    noteTitle: {
-      type: String,
-      default: '',
-    },
-    //  笔记内容
-    noteContent: {
-      type: String,
-      default: '',
-    },
   },
   data() {
     return {
@@ -191,7 +178,7 @@ export default {
       searchValue: '',
       //  点击移动笔记按钮
       isMoveNote: false,
-      //input笔记名绑定
+      //input绑定
       title: '',
       //  收藏
       isCollect: false,
@@ -203,18 +190,22 @@ export default {
       ],
       //  创建笔记本名
       noteBookName: '',
-      //笔记名
-      headTitle: this.noteTitle,
       //笔记本总页数
       noteBookTotalPage: null,
+      //  笔记名
+      headTitle: '',
+      //  该笔记绑定的笔记本
+      noteBindNoteBookId: null,
     }
   },
   mounted() {
+    //添加模式、编辑模式都使用到了title，因此创建时需要置空
+    this.title = ''
     //初始化編輯器
     this.__initEdit()
     //  修改笔记模式下
     if (!this.titleIsInput) {
-      this.setEditorContent()
+      this.getNote()
     }
     noteBookListPage = 1
     this.noteBookList = []
@@ -224,7 +215,7 @@ export default {
     //监听noteId的修改
     noteId(val) {
       if (val) {
-        this.setEditorContent()
+        this.getNote()
       }
     },
   },
@@ -257,32 +248,39 @@ export default {
     async function saveNote(id, params) {
       await noteServe.saveNote(id, params).then((res) => {
         this.$emit('changNote', res.data.data)
-        // this.headTitle = res.data.data.title
+        this.headTitle = res.data.data.title
       })
       this.$baseFun.__closeLoading()
     }
     //移动至标记
-    function toSign(noteId, signId) {
-      signServe.toSign(noteId, signId).then(() => {
+    function bindSign(noteId, signId) {
+      signServe.bindSign(noteId, signId).then(() => {
         this.$baseFun.__message('已添加到该标签', 'success')
-      })
-    }
-    //移动至笔记本
-    function toNoteBook(noteId, noteBookId) {
-      noteServe.toNoteBook(noteId, noteBookId).then(() => {
-        this.$baseFun.__message('已添加到该笔记本', 'success')
       })
     }
     //创建笔记本
     function createBook(params) {
       return noteBookServe.createNoteBook(params).then((res) => res)
     }
+    //获取具体的笔记
+    function getNoteContent(noteId) {
+      return noteServe.getNoteContent(noteId).then((res) => res)
+    }
+    //绑定笔记本
+    function bindNoteBook(noteId, noteBookId) {
+      noteBookServe.bindNoteBook(noteId, noteBookId).then((res) => {
+        this.$baseFun.__closeLoading()
+        if (res.data.code === 1) return this.$baseFun.__message('绑定失败')
+        this.noteBindNoteBookId = noteBookId
+      })
+    }
     return {
       createNote,
       saveNote,
-      toSign,
-      toNoteBook,
+      bindSign,
       createBook,
+      getNoteContent,
+      bindNoteBook,
     }
   },
   methods: {
@@ -305,9 +303,16 @@ export default {
         },
       })
     },
-    //根据笔记id获取内容
-    setEditorContent() {
-      this.editor.setValue(this.noteContent)
+    //获取笔记
+    async getNote() {
+      this.$baseFun.__loading('加载中')
+      await this.getNoteContent(this.noteId).then((res) => {
+        this.headTitle = res.data.data.title
+        this.editor.setValue(res.data.data.content)
+        if (res.data.data.notebook)
+          this.noteBindNoteBookId = res.data.data.notebook.id
+      })
+      this.$baseFun.__closeLoading()
     },
     //  获取笔记本
     getNoteBook(page) {
@@ -329,7 +334,6 @@ export default {
       params.content = note
       if (!this.titleIsInput) {
         this.$baseFun.__loading('加载中')
-        params.title = this.headTitle
         //  保存笔记
         this.saveNote(this.noteId, params)
       } else {
@@ -341,34 +345,33 @@ export default {
     searchNote(keyword) {
       this.searchValue = keyword
     },
-    //  下拉刷新
-    async pullRush(that) {
-      this.loading = true
-      // //置空
-      this.noteBookList = []
-      noteBookListPage = 1
-      this.getNoteBook()
-      await that.finishPullDown()
-      // this.loading = false
-    },
     //上拉加载
     async pullLoad(that) {
       noteBookListPage += 1
       this.getNoteBook(noteBookListPage)
       await that.finishPullUp()
     },
+    //点击移动笔记按钮
+    choseNoteBook() {
+      this.isMoveNote = !this.isMoveNote
+      if (this.isMoveNote && this.noteBindNoteBookId) {
+        this.$refs.scroll.topNoteBook(this.noteBindNoteBookId)
+      }
+    },
     //  移动笔记本
     checkNoteBook(noteBookId) {
-      this.toNoteBook(this.noteId, noteBookId)
+      this.$baseFun.__loading('绑定中...')
+      this.bindNoteBook(this.noteId, noteBookId)
       this.isMoveNote = false
     },
     //  选中标签
     choseSign(signId) {
       this.$refs.test.hide()
-      this.toSign(this.noteId, signId)
+      this.bindSign(this.noteId, signId)
     },
     //  修改笔记名称
     changeNoteName() {
+      this.title = this.headTitle
       this.$refs.changNoteName.open()
     },
     //  确认修改笔记名称
@@ -380,6 +383,7 @@ export default {
     //  创建笔记本
     createNoteBook() {
       this.isMoveNote = false
+      this.noteBookName = ''
       this.$refs.createNoteBook.open()
     },
     //  确认创建笔记本
@@ -391,7 +395,7 @@ export default {
       this.createBook(params).then((res) => {
         let data = {}
         data.id = res.data.data
-        data.desc = this.noteBookName
+        data.name = this.noteBookName
         this.noteBookList.push(data)
         this.noteBookName = ''
         this.$baseFun.__closeLoading()

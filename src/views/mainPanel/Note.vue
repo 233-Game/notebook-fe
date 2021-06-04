@@ -136,6 +136,14 @@
         </el-tooltip>
       </note-edit>
     </div>
+    <Tip
+      ref="delNote"
+      tip-icon="#iconsousuo_lajitong"
+      tip-title="删除笔记本"
+      @definite="definiteDeleteNote"
+    >
+      <div class="font_size_30 msgTip">确定删除该笔记吗?</div>
+    </Tip>
   </div>
 </template>
 
@@ -147,11 +155,13 @@ import { reactive } from 'vue'
 import { compareWidth } from '../../../common/commonFunction'
 import noteServe from '@/api/noteApi'
 import Clipboard from 'clipboard'
+import Tip from '@/components/panel/Tip'
 export default {
   name: 'Note',
   components: {
     scroll,
     noteEdit,
+    Tip,
   },
   props: {
     noteSlideHandle: {
@@ -199,13 +209,18 @@ export default {
       { desc: '笔记信息', icon: 'iconinfo' },
     ])
     //获取笔记列表
-    function getNote(page) {
-      return noteServe.getDefaultNote(page).then((res) => {
+    function getNoteList(page) {
+      noteServe.getDefaultNote(page).then((res) => {
         res.data.data.total > 0
           ? (this.haveNote = true)
           : (this.haveNote = false)
         this.noteTotalPage = res.data.data.total_pages
-        return res
+        //没有笔记时
+        if (res.data.data.list.length === 0) {
+          return (this.haveNote = false)
+        }
+        this.haveNote = true
+        this.noteList = res.data.data.list
       })
     }
     //删除笔记
@@ -218,13 +233,17 @@ export default {
     function getNoteContent(noteId) {
       return noteServe.getNoteContent(noteId).then((res) => res)
     }
-
+    //收藏笔记
+    function collectNote(noteId) {
+      return noteServe.collectNote(noteId).then((res) => res)
+    }
     return {
       sortLi,
       iconList,
-      getNote,
+      getNoteList,
       delNote,
       getNoteContent,
+      collectNote,
     }
   },
   computed: {
@@ -243,19 +262,30 @@ export default {
     },
   },
   async created() {
+    this.noteList = []
     //路由调转获取指定的笔记
-    let noteId = this.$router.currentRoute.value.noteId
-    if (noteId) {
+    let routeNoteId = this.$router.currentRoute.value.query.noteId
+    if (routeNoteId) {
+      this.getNoteFromRoute(routeNoteId)
       return
     }
     //路由调转获取指定的笔记本
     // let noteBookId = this.$router.currentRoute.value.noteBookId
+    // await this.onCheckNote(0)
     //获取默认笔记列
-    await this.getNote(this.noteDefaultPage).then((res) => {
-      this.noteList = res.data.data.list
-    })
+    await this.getNoteList(this.noteDefaultPage)
   },
   methods: {
+    //根据路由传递的noteId获取笔记
+    getNoteFromRoute(id) {
+      this.getNoteContent(id)
+        .then((res) => {
+          if (res.data.data) this.noteList.push(res.data.data)
+        })
+        .catch(() => {
+          return (this.haveNote = false)
+        })
+    },
     //上拉加载
     pullUpLoad() {
       setTimeout(() => {
@@ -276,14 +306,8 @@ export default {
       console.log(searchValue)
     },
     //  点击了某个笔记
-    async onCheckNote(index) {
-      this.$baseFun.__loading('加载中')
+    onCheckNote(index) {
       this.isCheckNote = index
-      await this.getNoteContent(this.noteList[index].id).then((res) => {
-        this.headTitle = res.data.data.title
-        this.noteContent = res.data.data.content
-      })
-      this.$baseFun.__closeLoading()
     },
     //  判断是否收藏
     isCollect(data) {
@@ -302,34 +326,18 @@ export default {
           break
         case 1:
           //收藏
-          this.noteList[index].collect === 1
-            ? (this.noteList[index].collect = 0)
-            : (this.noteList[index].collect = 1)
+          this.collectNote(this.noteList[index].id).then(() => {
+            this.noteList[index].collect === 1
+              ? (this.noteList[index].collect = 0)
+              : (this.noteList[index].collect = 1)
+          })
           break
         case 2:
-          this.delNote(this.noteList[index].id)
-          //删除
-          this.noteList.splice(index, 1)
-          //判断删除的索引值是否在选中索引之前
-          if (this.isCheckNote > index) {
-            //  在，将当前选中的索引值减1
-            this.isCheckNote -= 1
-          }
-          //判断要删除的笔记是否是当前选中的
-          else if (this.isCheckNote === index) {
-            //是，则选中该索引的前一个
-            this.isCheckNote =
-              this.isCheckNote - 1 < 0 ? 0 : this.isCheckNote - 1
-          }
-          setTimeout(() => {
-            this.$refs.scroll.defineFun((that) => {
-              that.refresh()
-            })
-          }, 500)
+          this.$refs.delNote.open(index)
           break
       }
     },
-    //  修改侧边栏笔记摘要
+    //  修改侧边栏笔记摘要 子组件修改了笔记内容或者名称时返回
     changNote(data) {
       this.noteList[this.isCheckNote].title = data.title
       this.noteList[this.isCheckNote].content = data.content
@@ -355,6 +363,29 @@ export default {
         case 2:
           console.log('获取详情')
       }
+    },
+    //  确定删除笔记
+    definiteDeleteNote(index) {
+      this.$refs.delNote.close()
+      this.delNote(this.noteList[index].id)
+      //删除
+      this.noteList.splice(index, 1)
+      //判断删除的索引值是否在选中索引之前
+      if (this.isCheckNote > index) {
+        //  在，将当前选中的索引值减1
+        this.isCheckNote -= 1
+      }
+      //判断要删除的笔记是否是当前选中的
+      else if (this.isCheckNote === index) {
+        //是，则选中该索引的前一个
+        this.isCheckNote = this.isCheckNote - 1 < 0 ? 0 : this.isCheckNote - 1
+      }
+      this.noteList.length === 0 ? (this.haveNote = false) : ''
+      setTimeout(() => {
+        this.$refs.scroll.defineFun((that) => {
+          that.refresh()
+        })
+      }, 500)
     },
   },
 }
@@ -459,7 +490,7 @@ export default {
 }
 .note-leave-to {
   opacity: 0;
-  transform: translateX(-80px);
+  //transform: translateX(-80px);
 }
 .note-leave-active {
   transition: all 0.5s ease;

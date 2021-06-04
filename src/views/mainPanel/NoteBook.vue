@@ -281,7 +281,6 @@ export default {
 <style lang="scss">
 .noteBook-leave-to {
   opacity: 0;
-  transform: translateX(-80px);
   transition: all 0.5s ease;
 }
 .noteBook-leave-active {
