@@ -126,9 +126,9 @@ export default {
     },
     //退出登录
     loginOut() {
-      this.$commonFun.removeStorage('token')
-      this.$commonFun.removeStorage('animalsUserInfo')
-      this.$user.setUserInfo()
+      this.$baseFun.removeStorage('animalsToken')
+      this.$baseFun.removeStorage('animalsUserInfo')
+      this.$user.updateUserInfo()
       this.$router.push('/login')
     },
   },

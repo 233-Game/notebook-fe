@@ -7,7 +7,7 @@
 export default {
   mounted() {
     this.$nextTick(() => {
-      this.$user.setUserInfo()
+      this.$user.updateUserInfo()
     })
   },
 }

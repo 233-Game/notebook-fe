@@ -46,26 +46,23 @@ export default {
     return {
       //是否展现
       showTip: false,
+      //  打开时父组件传过来的参数
+      openParameter: null,
     }
   },
   methods: {
     //关闭tip
-    close(callback = '') {
+    close() {
       this.showTip = false
-      if (callback) {
-        callback()
-      }
     },
     //打开tip
-    open(callback = '') {
+    open(parameter = null) {
       this.showTip = true
-      if (callback) {
-        callback()
-      }
+      if (parameter != null) this.openParameter = parameter
     },
     //确定
     definite() {
-      this.$emit('definite')
+      this.$emit('definite', this.openParameter)
     },
   },
 }

@@ -20,7 +20,7 @@
     >
       <div style="transform: translateY(0)">
         <slot name="scrollContent">
-          <div class="creatNote">
+          <div class="creatNote" @click="createNoteBook()">
             <i class="el-icon-folder-add createIcon"></i>
             创建笔记本
           </div>
@@ -32,7 +32,7 @@
             @click="checkItem(index, item.id)"
           >
             <div class="flex_ACenter noteBookItem">
-              <span>{{ item }}</span>
+              <span>{{ item.name }}</span>
               <i
                 v-if="checkNoteBook === index"
                 class="el-icon-success checkIcon"
@@ -51,6 +51,7 @@
 
 <script>
 import { getMap } from '../../../common/setStore'
+import { __init_scroll, __pulling } from '../../../common/commonFunction'
 
 export default {
   name: 'scroll',
@@ -73,6 +74,16 @@ export default {
     scrollWidth: {
       default: '100%',
       type: String,
+    },
+    //下拉刷新
+    isOpenPullRush: {
+      default: true,
+      type: Boolean,
+    },
+    //  上拉加载
+    isOpenPullLoad: {
+      default: true,
+      type: Boolean,
     },
   },
   computed: {
@@ -103,15 +114,17 @@ export default {
   methods: {
     //初始化scroll
     initScroll() {
-      this.scroll = this.$config.__init_scroll(this.$refs.wrapper)
+      this.scroll = __init_scroll(this.$refs.wrapper)
       //开启下拉刷新
-      this.$config.__pulling(this.scroll, 'pullingDown', () => {
-        this.$emit('pullRush')
-      })
+      if (this.isOpenPullRush)
+        __pulling(this.scroll, 'pullingDown', () => {
+          this.$emit('pullRush')
+        })
       //开启上拉加载
-      this.$config.__pulling(this.scroll, 'pullingUp', () => {
-        this.$emit('pullLoad')
-      })
+      if (this.isOpenPullLoad)
+        __pulling(this.scroll, 'pullingUp', () => {
+          this.$emit('pullLoad')
+        })
     },
     //  搜索
     search() {
@@ -137,6 +150,10 @@ export default {
         callback(this.scroll)
       }
     },
+    //  创建笔记本
+    createNoteBook() {
+      this.$emit('createNoteBook')
+    },
   },
 }
 </script>
@@ -156,6 +173,7 @@ export default {
     width: 100%;
     border-bottom: 1px solid #e1e1e1;
     height: 60px;
+    line-height: 60px;
     padding: 20px;
     background-color: #fff;
     .el-input__inner {
@@ -182,6 +200,8 @@ export default {
     font-weight: bold;
     vertical-align: middle;
     margin-right: 10px;
+    height: 60px;
+    line-height: 60px;
   }
   .noteList:hover {
     background-color: var(--icon_font_bgc);
@@ -197,6 +217,7 @@ export default {
   .creatNote {
     box-sizing: border-box;
     width: calc(100% - 20px);
+    height: 60px;
     margin: 0 10px;
     padding: 0 10px;
     border-bottom: 1px solid #e1e1e1;

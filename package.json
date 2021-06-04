@@ -12,6 +12,7 @@
     "@better-scroll/pull-down": "^2.2.1",
     "@better-scroll/pull-up": "^2.2.1",
     "axios": "^0.21.1",
+    "clipboard": "^2.0.8",
     "core-js": "^3.6.5",
     "element-plus": "^1.0.2-beta.35",
     "register-service-worker": "^1.7.2",

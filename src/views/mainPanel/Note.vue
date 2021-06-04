@@ -27,7 +27,7 @@
       </div>
       <scroll
         ref="scroll"
-        v-if="noteList.length > 0"
+        v-if="haveNote"
         :scrollWidth="computedWidth"
         scroll-height="calc(100vh - 130px)"
         class="better-scroll"
@@ -43,7 +43,7 @@
               :class="isCheckNote === index ? 'checkNote' : ''"
               v-for="(item, index) in noteList"
               :key="item.id"
-              @click="onCheckNote(index, item)"
+              @click="onCheckNote(index)"
             >
               <!--            笔记头-->
               <div class="titleAndOpera">
@@ -88,7 +88,7 @@
                 </div>
               </div>
               <!--            创建时间-->
-              <div class="font_size">{{ item.time }}</div>
+              <div class="font_size">{{ item.updated_at }}</div>
               <!--            笔记文字内容-->
               <div class="noteContent">{{ item.content }}</div>
             </div>
@@ -101,10 +101,12 @@
     <!--    右侧编辑栏-->
     <div class="editNote">
       <note-edit
+        :noteId="noteList[isCheckNote].id"
         :titleIsInput="false"
-        :head-title="computedTitle"
-        :editContent="computedContent"
         v-if="noteList.length > 0"
+        @changNote="changNote"
+        :note-title="noteTitle"
+        :note-content="noteContent"
       >
         <el-tooltip
           :hide-after="0"
@@ -119,14 +121,14 @@
           </i>
         </el-tooltip>
         <el-tooltip
-          v-for="(icon, key) in iconList"
-          :key="key"
+          v-for="(icon, iconIndex) in iconList"
+          :key="iconIndex"
           :hide-after="0"
           effect="dark"
           :content="icon.desc"
           placement="bottom"
         >
-          <i class="editNoteIcon">
+          <i class="editNoteIcon" @click="rightOpera(iconIndex)">
             <svg class="icon" aria-hidden="true">
               <use :xlink:href="'#' + icon.icon"></use>
             </svg>
@@ -142,6 +144,9 @@ import scroll from '@/components/basisModule/scroll'
 import noteEdit from '@/views/mainPanel/AddNote'
 import { getMap } from '../../../common/setStore'
 import { reactive } from 'vue'
+import { compareWidth } from '../../../common/commonFunction'
+import noteServe from '@/api/noteApi'
+import Clipboard from 'clipboard'
 export default {
   name: 'Note',
   components: {
@@ -157,27 +162,23 @@ export default {
   data() {
     return {
       //笔记列表
-      noteList: [
-        { id: 1, title: 'react', content: 'r', time: '4天前', collect: 1 },
-        { id: 2, title: 'js', content: 'j', time: '4天前', collect: 0 },
-        { id: 3, title: 'vue', content: 'v', time: '4天前', collect: 1 },
-        { id: 4, title: 'jq', content: 'q', time: '4天前', collect: 0 },
-        { id: 5, title: 'node', content: 'p', time: '4天前', collect: 1 },
-        { id: 1, title: 'react', content: 'r', time: '4天前', collect: 1 },
-        { id: 2, title: 'js', content: 'j', time: '4天前', collect: 0 },
-        { id: 3, title: 'vue', content: 'v', time: '4天前', collect: 1 },
-        { id: 4, title: 'jq', content: 'q', time: '4天前', collect: 0 },
-        { id: 5, title: 'node', content: 'p', time: '4天前', collect: 1 },
-        { id: 1, title: 'react', content: 'r', time: '4天前', collect: 1 },
-        { id: 2, title: 'js', content: 'j', time: '4天前', collect: 0 },
-        { id: 3, title: 'vue', content: 'v', time: '4天前', collect: 1 },
-        { id: 4, title: 'jq', content: 'q', time: '4天前', collect: 0 },
-        { id: 5, title: 'node', content: 'p', time: '4天前', collect: 1 },
-      ],
+      noteList: [],
       //选中笔记的样式 需要編輯的筆記的index
       isCheckNote: this.$eNum.isCheckNoteDefault,
       //  下拉刷新的加载图标
       loading: false,
+      //  默认笔记页数
+      noteDefaultPage: 1,
+      //笔记的总页数
+      noteTotalPage: 0,
+      //  显示scroll还是empty
+      haveNote: true,
+      //  展示的noteBook内容 -1表示为笔记列表，默认获取所有笔记
+      noteBookId: -1,
+      //  当前笔记的笔记名
+      noteTitle: '',
+      //  当前选中笔记的内容
+      noteContent: '',
     }
   },
   setup() {
@@ -193,40 +194,66 @@ export default {
     ])
     //编辑区图标列表
     let iconList = reactive([
-      { desc: '添加标签', icon: 'icon0-57' },
       { desc: '删除笔记', icon: 'iconlajilou' },
       { desc: '复制链接', icon: 'iconfuzhi' },
       { desc: '笔记信息', icon: 'iconinfo' },
     ])
+    //获取笔记列表
+    function getNote(page) {
+      return noteServe.getDefaultNote(page).then((res) => {
+        res.data.data.total > 0
+          ? (this.haveNote = true)
+          : (this.haveNote = false)
+        this.noteTotalPage = res.data.data.total_pages
+        return res
+      })
+    }
+    //删除笔记
+    function delNote(noteId) {
+      noteServe.delNote(noteId).then((res) => {
+        console.log(res)
+      })
+    }
+    //获取具体的笔记
+    function getNoteContent(noteId) {
+      return noteServe.getNoteContent(noteId).then((res) => res)
+    }
+
     return {
       sortLi,
       iconList,
+      getNote,
+      delNote,
+      getNoteContent,
     }
   },
   computed: {
     cssVar() {
-      let compareWidth = this.$config.compareWidth(1200)
+      let width = compareWidth(1200)
       //true 正常显示 false 特殊处理
       return {
-        '--varWidth': compareWidth ? '25%' : '35%',
+        '--varWidth': width ? '25%' : '35%',
         '--icon_font_bgc': getMap('IconFontBGC'),
         '--search_list_font_color': getMap('SearchListFontColor'),
       }
     },
     computedWidth() {
-      let compareWidth = this.$config.compareWidth(1200)
-      return compareWidth
-        ? 'calc((100vw - 100px)*0.25)'
-        : 'calc((100vw - 100px)*0.35)'
+      let width = compareWidth(1200)
+      return width ? 'calc((100vw - 100px)*0.25)' : 'calc((100vw - 100px)*0.35)'
     },
-    //  標題
-    computedTitle() {
-      return this.noteList[this.isCheckNote].title
-    },
-    //  編輯初始内容
-    computedContent() {
-      return this.noteList[this.isCheckNote].content
-    },
+  },
+  async created() {
+    //路由调转获取指定的笔记
+    let noteId = this.$router.currentRoute.value.noteId
+    if (noteId) {
+      return
+    }
+    //路由调转获取指定的笔记本
+    // let noteBookId = this.$router.currentRoute.value.noteBookId
+    //获取默认笔记列
+    await this.getNote(this.noteDefaultPage).then((res) => {
+      this.noteList = res.data.data.list
+    })
   },
   methods: {
     //上拉加载
@@ -249,9 +276,14 @@ export default {
       console.log(searchValue)
     },
     //  点击了某个笔记
-    onCheckNote(index, data) {
+    async onCheckNote(index) {
+      this.$baseFun.__loading('加载中')
       this.isCheckNote = index
-      console.log(index, data)
+      await this.getNoteContent(this.noteList[index].id).then((res) => {
+        this.headTitle = res.data.data.title
+        this.noteContent = res.data.data.content
+      })
+      this.$baseFun.__closeLoading()
     },
     //  判断是否收藏
     isCollect(data) {
@@ -261,7 +293,7 @@ export default {
       return '#iconshoucang1'
     },
     //  左侧功能区图标按钮
-    //num
+    //num 笔记分享删除等操作
     onOpera(num, index) {
       switch (num) {
         case 0:
@@ -275,6 +307,7 @@ export default {
             : (this.noteList[index].collect = 1)
           break
         case 2:
+          this.delNote(this.noteList[index].id)
           //删除
           this.noteList.splice(index, 1)
           //判断删除的索引值是否在选中索引之前
@@ -294,6 +327,33 @@ export default {
             })
           }, 500)
           break
+      }
+    },
+    //  修改侧边栏笔记摘要
+    changNote(data) {
+      this.noteList[this.isCheckNote].title = data.title
+      this.noteList[this.isCheckNote].content = data.content
+      this.noteList[this.isCheckNote].updated_at = data.updated_at
+    },
+    //  右侧编辑区功能键 删除 复制链接等操作
+    rightOpera(currentIndex) {
+      switch (currentIndex) {
+        //删除笔记
+        case 0:
+          this.onOpera(2, this.isCheckNote)
+          break
+        //复制链接
+        case 1:
+          var copy = new Clipboard('.editNoteIcon', {
+            text: () => window.location.href,
+          })
+          copy.on('success', () => {
+            this.$baseFun.__message('复制成功', 'success')
+          })
+          break
+        //获取笔记详情
+        case 2:
+          console.log('获取详情')
       }
     },
   },

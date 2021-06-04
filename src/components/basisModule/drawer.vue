@@ -33,6 +33,8 @@
 </template>
 
 <script>
+import { compareWidth } from '../../../common/commonFunction'
+
 export default {
   name: 'drawer',
   props: {
@@ -60,7 +62,7 @@ export default {
   },
   computed: {
     drawerSize() {
-      let drawerSize = this.$config.compareWidth(1200)
+      let drawerSize = compareWidth(1200)
       //true 正常显示 false 特殊处理
       return drawerSize ? '25%' : '35%'
     },

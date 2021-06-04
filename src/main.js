@@ -7,7 +7,7 @@ import './registerServiceWorker'
 import router from './router'
 import store from './store'
 import User from '../common/user'
-import CommonFunction from '/common/commonFunction'
+import baseFun from '/common/baseFun'
 import config from '/common/config'
 import ENum from '../common/ENum'
 const app = createApp(App)
@@ -16,6 +16,6 @@ app.use(ElementPlus)
 app.use(store).use(router).mount('#app')
 // 全局挂载
 app.config.globalProperties.$user = User
-app.config.globalProperties.$commonFun = CommonFunction
+app.config.globalProperties.$baseFun = baseFun
 app.config.globalProperties.$config = config
 app.config.globalProperties.$eNum = ENum

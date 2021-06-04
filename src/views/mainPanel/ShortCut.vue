@@ -198,6 +198,8 @@ export default {
   display: block;
   height: 50px;
 }
+</style>
+<style lang="scss">
 .msgTip {
   display: block;
   padding: 20px 40px;

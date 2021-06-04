@@ -1,5 +1,5 @@
 import Router from '@/router'
-import commonFun from '/common/commonFunction'
+import baseFun from './baseFun'
 export default {
   // userInfo:localStorage.getItem("userInfo"),
   userInfo: {},
@@ -14,8 +14,8 @@ export default {
     }
   },
   //  设置用户信息
-  setUserInfo() {
-    this.userInfo = JSON.parse(commonFun.getStorage('animalsUserInfo'))
-    this.token = commonFun.getStorage('token')
+  updateUserInfo() {
+    this.userInfo = JSON.parse(baseFun.getStorage('animalsUserInfo'))
+    this.token = baseFun.getStorage('animalsToken')
   },
 }
