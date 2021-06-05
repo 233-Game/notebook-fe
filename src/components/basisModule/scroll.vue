@@ -156,6 +156,8 @@ export default {
     },
     //  将该笔记绑定的笔记本放置在第一位
     topNoteBook(noteBookId) {
+      this.checkNoteBook = -1
+      if (!noteBookId) return
       this.list.forEach((item, index) => {
         if (item.id === noteBookId) {
           this.checkNoteBook = index

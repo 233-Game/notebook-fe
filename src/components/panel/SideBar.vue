@@ -32,6 +32,7 @@
             circle
             :class="currentBtnIndex === index ? 'isCheckBtn' : ''"
             @click="checkBtn(index)"
+            @dblclick="dbTap(index)"
           ></el-button>
         </el-tooltip>
       </el-row>
@@ -73,6 +74,12 @@ export default {
     checkBtn(index) {
       this.currentBtnIndex = index
       this.$emit('tapSideBar', index)
+    },
+    //  双击事件
+    dbTap(index) {
+      if (index === 2) {
+        this.$config.noteReload.reload()
+      }
     },
   },
   setup() {

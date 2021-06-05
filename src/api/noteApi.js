@@ -9,8 +9,10 @@ export default class noteServe {
     return request.post('/source/create', params)
   }
   //获取笔记列表（默认）
-  static getDefaultNote(page) {
-    return request.get('/source/list', { page: page }).then((res) => res)
+  static getDefaultNote(page, search = '') {
+    return request
+      .get(`/source/list?search=${search}`, { page: page })
+      .then((res) => res)
   }
   //  收藏笔记<缺url>
   static collectNote(params = {}) {

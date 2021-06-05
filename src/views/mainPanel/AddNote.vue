@@ -264,7 +264,9 @@ export default {
     }
     //获取具体的笔记
     function getNoteContent(noteId) {
-      return noteServe.getNoteContent(noteId).then((res) => res)
+      return noteServe.getNoteContent(noteId).then((res) => {
+        return res
+      })
     }
     //绑定笔记本
     function bindNoteBook(noteId, noteBookId) {
@@ -274,6 +276,15 @@ export default {
         this.noteBindNoteBookId = noteBookId
       })
     }
+    //  获取笔记本
+    function getNoteBook(page) {
+      __getNoteBookList(page).then((res) => {
+        if (res.data.data.list) this.noteBookList = res.data.data.list
+        // for (let noteBookElement of res.data.data.list) {
+        //   this.noteBookList.push(noteBookElement)
+        // }
+      })
+    }
     return {
       createNote,
       saveNote,
@@ -281,6 +292,7 @@ export default {
       createBook,
       getNoteContent,
       bindNoteBook,
+      getNoteBook,
     }
   },
   methods: {
@@ -301,6 +313,12 @@ export default {
         resize: {
           enable: true,
         },
+        upload: {
+          headers: {
+            Authorization: this.$user.token,
+          },
+          url: '/upload/vditor',
+        },
       })
     },
     //获取笔记
@@ -311,18 +329,11 @@ export default {
         this.editor.setValue(res.data.data.content)
         if (res.data.data.notebook)
           this.noteBindNoteBookId = res.data.data.notebook.id
+        else this.noteBindNoteBookId = null
       })
       this.$baseFun.__closeLoading()
     },
-    //  获取笔记本
-    getNoteBook(page) {
-      __getNoteBookList(page).then((res) => {
-        if (res.data.data.list)
-          for (let noteBookElement of res.data.data.list) {
-            this.noteBookList.push(noteBookElement)
-          }
-      })
-    },
+
     //创建、保存筆記
     submitBtn() {
       if (!this.title && this.titleIsInput) {
@@ -354,7 +365,7 @@ export default {
     //点击移动笔记按钮
     choseNoteBook() {
       this.isMoveNote = !this.isMoveNote
-      if (this.isMoveNote && this.noteBindNoteBookId) {
+      if (this.isMoveNote) {
         this.$refs.scroll.topNoteBook(this.noteBindNoteBookId)
       }
     },

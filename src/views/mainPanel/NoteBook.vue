@@ -27,11 +27,11 @@
             :key="item.id"
             @click="toNote(item)"
           >
-            <el-image class="displayImage" :src="item.url" fit="cover" />
+            <el-image class="displayImage" :src="item.cover" fit="cover" />
             <div class="rightItem">
               <span class="name font_size_18">{{ item.name }}</span>
               <span class="desc color_87">{{ item.desc }}</span>
-              <span class="time font_size">{{ item.time }}</span>
+              <span class="time font_size">{{ item.updated_at }}</span>
             </div>
             <div
               class="delBook flex_ACenter_Jcenter"
@@ -53,6 +53,7 @@
 import drawer from '@/components/basisModule/drawer'
 import scroll from '@/components/basisModule/scroll'
 import { getMap } from '../../../common/setStore'
+import { __getNoteBookList } from '../../../common/commonFunction'
 let delBookClock = 1
 export default {
   name: 'NoteBook',
@@ -65,6 +66,20 @@ export default {
   components: {
     drawer,
     scroll,
+  },
+  setup() {
+    //  获取笔记本
+    function getNoteBook(page) {
+      __getNoteBookList(page).then((res) => {
+        this.bookList = res.data.data.list
+        // for (let noteBookElement of res.data.data.list) {
+        //   this.noteBookList.push(noteBookElement)
+        // }
+      })
+    }
+    return {
+      getNoteBook,
+    }
   },
   data() {
     return {
@@ -134,6 +149,9 @@ export default {
       //  下拉刷新的加载图标
       loading: false,
     }
+  },
+  created() {
+    this.getNoteBook()
   },
   computed: {
     cssVar() {

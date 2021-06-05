@@ -163,6 +163,7 @@ export default {
     noteEdit,
     Tip,
   },
+  inject: ['reload'], //注入reload方法
   props: {
     noteSlideHandle: {
       type: String,
@@ -189,6 +190,8 @@ export default {
       noteTitle: '',
       //  当前选中笔记的内容
       noteContent: '',
+      //  搜索笔记的关键字
+      searchNoteKey: '',
     }
   },
   setup() {
@@ -237,6 +240,7 @@ export default {
     function collectNote(noteId) {
       return noteServe.collectNote(noteId).then((res) => res)
     }
+
     return {
       sortLi,
       iconList,
@@ -274,6 +278,8 @@ export default {
     // await this.onCheckNote(0)
     //获取默认笔记列
     await this.getNoteList(this.noteDefaultPage)
+    //用于强制刷新
+    this.$config.noteReload = this
   },
   methods: {
     //根据路由传递的noteId获取笔记
@@ -286,24 +292,45 @@ export default {
           return (this.haveNote = false)
         })
     },
+    //搜索笔记
+    searchNote(searchValue, page = 1) {
+      noteServe.getDefaultNote(page, searchValue).then((res) => {
+        if (res.data.data.list.length > 0) {
+          this.searchNoteKey = searchValue
+          page === 1 ? [(this.noteDefaultPage = 1), (this.noteList = [])] : ''
+          for (const item of res.data.data.list) {
+            this.noteList.push(item)
+          }
+          this.noteTotalPage = res.data.data.total_pages
+        } else {
+          this.searchNoteKey = ''
+          this.noteDefaultPage = 1
+          this.$baseFun.__message('未搜索到相关内容')
+          this.getNoteList(1)
+        }
+      })
+    },
     //上拉加载
     pullUpLoad() {
-      setTimeout(() => {
-        this.$refs.scroll.closePullUp()
-      }, 1000)
+      if (this.noteDefaultPage <= this.noteDefaultPage)
+        this.noteDefaultPage += 1
+      if (this.searchValue) {
+        //判断searchValue是否有值，无时为所有笔记列表加载，有时是搜索笔记加载
+        this.searchNote(this.searchNoteKey, this.noteDefaultPage)
+      } else {
+        this.getNoteList(this.noteDefaultPage)
+      }
+      this.$refs.scroll.closePullUp()
     },
     // 下拉刷新
-    pullDownRush() {
+    async pullDownRush() {
       this.loading = !this.loading
-      setTimeout(() => {
-        //调用关闭下拉刷新动作
-        this.$refs.scroll.closePullDown()
-        this.loading = !this.loading
-      }, 1000)
-    },
-    //搜索
-    searchNote(searchValue) {
-      console.log(searchValue)
+      this.noteDefaultPage = 1
+      this.searchNoteKey = ''
+      await this.getNoteList(1)
+      //调用关闭下拉刷新动作
+      this.$refs.scroll.closePullDown()
+      this.loading = !this.loading
     },
     //  点击了某个笔记
     onCheckNote(index) {

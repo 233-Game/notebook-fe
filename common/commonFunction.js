@@ -1,4 +1,3 @@
-import noteServe from '@/api/noteApi'
 import noteBookServe from '@/api/noteBookApi'
 //引入路由
 // import route from '@/router/index'
@@ -48,11 +47,4 @@ export function compareWidth(width = 0) {
 //  获取笔记本,列表
 export function __getNoteBookList(page = 1) {
   return noteBookServe.getNoteBook(page).then((res) => res)
-}
-//收藏笔记
-export function __collectNote(noteId, noteBookId) {
-  let params = {}
-  params.id = noteId
-  params.noteBookId = noteBookId
-  return noteServe.saveNote(params).then((res) => res)
 }
