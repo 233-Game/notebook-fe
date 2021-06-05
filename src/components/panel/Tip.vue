@@ -20,6 +20,7 @@
         <el-button
           class="definite"
           type="success"
+          :loading="submitLoading"
           @click.stop.prevent="definite()"
           >{{ definiteValue }}</el-button
         >
@@ -48,6 +49,7 @@ export default {
       showTip: false,
       //  打开时父组件传过来的参数
       openParameter: null,
+      submitLoading: false,
     }
   },
   methods: {
@@ -62,7 +64,13 @@ export default {
     },
     //确定
     definite() {
+      this.submitLoading = true
       this.$emit('definite', this.openParameter)
+    },
+  },
+  watch: {
+    showTip() {
+      this.submitLoading = false
     },
   },
 }
