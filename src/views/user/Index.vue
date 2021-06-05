@@ -74,10 +74,10 @@ export default {
     },
     //  点击了tapSideBar
     tapSideBar(index) {
-      let fullPath = this.$router.currentRoute.value.path
-      this.$router.push(
-        `${fullPath}?shortDrawer=${this.shortDrawer}&noteBookDrawer=${this.noteBookDrawer}&signDrawer=${this.signDrawer}`
-      )
+      // let fullPath = this.$router.currentRoute.value.path
+      // this.$router.push(
+      //   `${fullPath}?shortDrawer=${this.shortDrawer}&noteBookDrawer=${this.noteBookDrawer}&signDrawer=${this.signDrawer}`
+      // )
       switch (index) {
         //添加笔记
         case 0:

@@ -68,7 +68,7 @@
             </el-tooltip>
           </slot>
           <el-popover
-            ref="test"
+            ref="sign"
             placement="bottom-start"
             :width="210"
             :hide-after="0"
@@ -89,7 +89,7 @@
                 :key="indexLi"
                 @click="choseSign(li.id)"
               >
-                {{ li.desc }}
+                {{ li.name }}
               </li>
             </ul>
           </el-popover>
@@ -183,11 +183,7 @@ export default {
       //  收藏
       isCollect: false,
       //  标签列表
-      signList: [
-        { id: 0, desc: '啦啦啦啦' },
-        { id: 1, desc: '啦啦啦啦' },
-        { id: 2, desc: '啦啦啦啦' },
-      ],
+      signList: [],
       //  创建笔记本名
       noteBookName: '',
       //笔记本总页数
@@ -210,6 +206,7 @@ export default {
     noteBookListPage = 1
     this.noteBookList = []
     this.getNoteBook(noteBookListPage)
+    this.getSignList()
   },
   watch: {
     //监听noteId的修改
@@ -256,6 +253,8 @@ export default {
     function bindSign(noteId, signId) {
       signServe.bindSign(noteId, signId).then(() => {
         this.$baseFun.__message('已添加到该标签', 'success')
+        if (this.$router.currentRoute.value.query.signId)
+          this.$parent.moveNote(this.noteId)
       })
     }
     //创建笔记本
@@ -274,6 +273,15 @@ export default {
         this.$baseFun.__closeLoading()
         if (res.data.code === 1) return this.$baseFun.__message('绑定失败')
         this.noteBindNoteBookId = noteBookId
+        if (this.$router.currentRoute.value.query.noteBookId) {
+          this.$parent.moveNote(this.noteId)
+        }
+      })
+    }
+    //获取标签列表
+    function getSignList() {
+      signServe.getList().then((res) => {
+        this.signList = res.data.data
       })
     }
     //  获取笔记本
@@ -293,6 +301,7 @@ export default {
       getNoteContent,
       bindNoteBook,
       getNoteBook,
+      getSignList,
     }
   },
   methods: {
@@ -377,7 +386,7 @@ export default {
     },
     //  选中标签
     choseSign(signId) {
-      this.$refs.test.hide()
+      this.$refs.sign.hide()
       this.bindSign(this.noteId, signId)
     },
     //  修改笔记名称

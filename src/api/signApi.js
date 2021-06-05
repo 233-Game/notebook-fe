@@ -1,7 +1,7 @@
 import request from '/common/request'
 
 export default class signServe {
-  //  移动到笔记本<缺url>
+  //  移动到笔记本
   static bindSign(noteId, tagId) {
     return request.post('/tag/bind', {
       source_id: noteId,

@@ -3,7 +3,7 @@
     <!--    左侧功能框-->
     <div class="noteTitle" :style="cssVar">
       <div class="handle flex_ACenter">
-        <span class="color_87 font_size_18">{{ noteSlideHandle }}</span>
+        <span class="color_87 font_size_18">{{ computedName }}</span>
         <span class="font_size">（{{ noteList.length }} 条笔记）</span>
         <el-popover
           placement="bottom-start"
@@ -27,7 +27,6 @@
       </div>
       <scroll
         ref="scroll"
-        v-if="haveNote"
         :scrollWidth="computedWidth"
         scroll-height="calc(100vh - 130px)"
         class="better-scroll"
@@ -37,66 +36,68 @@
         :loading="loading"
       >
         <template v-slot:scrollContent>
-          <transition-group name="note">
-            <div
-              class="noteList"
-              :class="isCheckNote === index ? 'checkNote' : ''"
-              v-for="(item, index) in noteList"
-              :key="item.id"
-              @click="onCheckNote(index)"
-            >
-              <!--            笔记头-->
-              <div class="titleAndOpera">
-                <span class="title_content color_87">{{ item.title }}</span>
-                <div class="opera">
-                  <el-tooltip
-                    :hide-after="0"
-                    effect="dark"
-                    content="分享笔记"
-                    placement="bottom"
-                  >
-                    <i @click.stop.prevent="onOpera(0, index)">
-                      <svg class="icon" aria-hidden="true">
-                        <use xlink:href="#iconfenxiang"></use>
-                      </svg>
-                    </i>
-                  </el-tooltip>
-                  <el-tooltip
-                    :hide-after="0"
-                    effect="dark"
-                    content="收藏笔记"
-                    placement="bottom"
-                  >
-                    <i @click.stop.prevent="onOpera(1, index)">
-                      <svg class="icon" aria-hidden="true">
-                        <use :xlink:href="isCollect(item)"></use>
-                      </svg>
-                    </i>
-                  </el-tooltip>
-                  <el-tooltip
-                    :hide-after="0"
-                    effect="dark"
-                    content="删除笔记"
-                    placement="bottom"
-                  >
-                    <i @click.stop.prevent="onOpera(2, index)">
-                      <svg class="icon" aria-hidden="true">
-                        <use xlink:href="#iconlajilou"></use>
-                      </svg>
-                    </i>
-                  </el-tooltip>
+          <div v-if="haveNote">
+            <transition-group name="note">
+              <div
+                class="noteList"
+                :class="isCheckNote === index ? 'checkNote' : ''"
+                v-for="(item, index) in noteList"
+                :key="item.id"
+                @click="onCheckNote(index)"
+              >
+                <!--            笔记头-->
+                <div class="titleAndOpera">
+                  <span class="title_content color_87">{{ item.title }}</span>
+                  <div class="opera">
+                    <el-tooltip
+                      :hide-after="0"
+                      effect="dark"
+                      content="分享笔记"
+                      placement="bottom"
+                    >
+                      <i @click.stop.prevent="onOpera(0, index)">
+                        <svg class="icon" aria-hidden="true">
+                          <use xlink:href="#iconfenxiang"></use>
+                        </svg>
+                      </i>
+                    </el-tooltip>
+                    <el-tooltip
+                      :hide-after="0"
+                      effect="dark"
+                      content="收藏笔记"
+                      placement="bottom"
+                    >
+                      <i @click.stop.prevent="onOpera(1, index)">
+                        <svg class="icon" aria-hidden="true">
+                          <use :xlink:href="isCollect(item)"></use>
+                        </svg>
+                      </i>
+                    </el-tooltip>
+                    <el-tooltip
+                      :hide-after="0"
+                      effect="dark"
+                      content="删除笔记"
+                      placement="bottom"
+                    >
+                      <i @click.stop.prevent="onOpera(2, index)">
+                        <svg class="icon" aria-hidden="true">
+                          <use xlink:href="#iconlajilou"></use>
+                        </svg>
+                      </i>
+                    </el-tooltip>
+                  </div>
                 </div>
+                <!--            创建时间-->
+                <div class="font_size">{{ item.updated_at }}</div>
+                <!--            笔记文字内容-->
+                <div class="noteContent">{{ item.content }}</div>
               </div>
-              <!--            创建时间-->
-              <div class="font_size">{{ item.updated_at }}</div>
-              <!--            笔记文字内容-->
-              <div class="noteContent">{{ item.content }}</div>
-            </div>
-          </transition-group>
+            </transition-group>
+          </div>
+          <!--      当没有笔记时提醒-->
+          <el-empty v-else description="点击 + 号，添加笔记"></el-empty>
         </template>
       </scroll>
-      <!--      当没有笔记时提醒-->
-      <el-empty v-else description="点击 + 号，添加笔记"></el-empty>
     </div>
     <!--    右侧编辑栏-->
     <div class="editNote">
@@ -139,7 +140,7 @@
     <Tip
       ref="delNote"
       tip-icon="#iconsousuo_lajitong"
-      tip-title="删除笔记本"
+      tip-title="删除笔记"
       @definite="definiteDeleteNote"
     >
       <div class="font_size_30 msgTip">确定删除该笔记吗?</div>
@@ -156,6 +157,7 @@ import { compareWidth } from '../../../common/commonFunction'
 import noteServe from '@/api/noteApi'
 import Clipboard from 'clipboard'
 import Tip from '@/components/panel/Tip'
+import noteBookServe from '@/api/noteBookApi'
 export default {
   name: 'Note',
   components: {
@@ -192,6 +194,8 @@ export default {
       noteContent: '',
       //  搜索笔记的关键字
       searchNoteKey: '',
+      //  下拉加载类型 默认笔记
+      loadOption: 'note',
     }
   },
   setup() {
@@ -213,25 +217,21 @@ export default {
     ])
     //获取笔记列表
     function getNoteList(page) {
-      noteServe.getDefaultNote(page).then((res) => {
-        res.data.data.total > 0
-          ? (this.haveNote = true)
-          : (this.haveNote = false)
+      this.loadOption = 'note'
+      let params = {}
+      params.page = page
+      noteServe.getDefaultNote(params).then((res) => {
         this.noteTotalPage = res.data.data.total_pages
         //没有笔记时
-        if (res.data.data.list.length === 0) {
-          return (this.haveNote = false)
-        }
-        this.haveNote = true
-        this.noteList = res.data.data.list
+        this.judgeData(res.data.data.list)
       })
     }
     //删除笔记
-    function delNote(noteId) {
-      noteServe.delNote(noteId).then((res) => {
-        console.log(res)
-      })
-    }
+    // function delNote(noteId) {
+    //   noteServe.delNote(noteId).then((res) => {
+    //     console.log(res)
+    //   })
+    // }
     //获取具体的笔记
     function getNoteContent(noteId) {
       return noteServe.getNoteContent(noteId).then((res) => res)
@@ -240,14 +240,34 @@ export default {
     function collectNote(noteId) {
       return noteServe.collectNote(noteId).then((res) => res)
     }
-
+    //  获取笔记本中的笔记
+    function getNoteInNoteBook(noteBookId, page) {
+      this.loadOption = 'noteBook'
+      this.noteList = []
+      let params = {}
+      params.notebook_id = noteBookId
+      params.page = page
+      noteServe.getDefaultNote(params).then((res) => {
+        this.noteTotalPage = res.data.data.total_pages
+        this.judgeData(res.data.data.list)
+      })
+    }
+    //  获取标签中的笔记
+    function getNoteInSign(signId, page) {
+      this.loadOption = 'sign'
+      this.noteList = []
+      noteBookServe.getNoteInSign(signId, page).then((res) => {
+        this.noteList = res.data.data.list()
+      })
+    }
     return {
       sortLi,
       iconList,
       getNoteList,
-      delNote,
       getNoteContent,
       collectNote,
+      getNoteInNoteBook,
+      getNoteInSign,
     }
   },
   computed: {
@@ -264,24 +284,55 @@ export default {
       let width = compareWidth(1200)
       return width ? 'calc((100vw - 100px)*0.25)' : 'calc((100vw - 100px)*0.35)'
     },
+    computedName() {
+      let name = this.$router.currentRoute.value.query.name
+      this.getData()
+      if (name) {
+        return name
+      } else {
+        return this.noteSlideHandle
+      }
+    },
   },
-  async created() {
-    this.noteList = []
-    //路由调转获取指定的笔记
-    let routeNoteId = this.$router.currentRoute.value.query.noteId
-    if (routeNoteId) {
-      this.getNoteFromRoute(routeNoteId)
-      return
-    }
-    //路由调转获取指定的笔记本
-    // let noteBookId = this.$router.currentRoute.value.noteBookId
-    // await this.onCheckNote(0)
-    //获取默认笔记列
-    await this.getNoteList(this.noteDefaultPage)
+  created() {
+    // this.getData()
     //用于强制刷新
     this.$config.noteReload = this
   },
   methods: {
+    delNote(noteId) {
+      noteServe.delNote(noteId).then((res) => {
+        console.log(res)
+      })
+    },
+    //根据不同类型路由获取不同信息
+    async getData() {
+      // this.$refs.scroll.defineFun((that) => {
+      //   that.autoPullDownRefresh()
+      // })
+      this.noteDefaultPage = 1
+      //路由调转获取指定的笔记
+      let routeNoteId = this.$router.currentRoute.value.query.noteId
+      //路由调转获取指定的笔记本
+      let noteBookId = this.$router.currentRoute.value.query.noteBookId
+      //路由调转获取指定的标签
+      let signId = this.$router.currentRoute.value.query.signId
+      if (routeNoteId) {
+        await this.getNoteFromRoute(routeNoteId)
+        return false
+      } else if (noteBookId) {
+        //  获取笔记本中的笔记
+        await this.getNoteInNoteBook(noteBookId, 1)
+        return false
+      } else if (signId) {
+        //获取标签中的笔记
+        await this.getNoteInSign(signId, 1)
+        return false
+      }
+      //获取默认笔记列
+      await this.getNoteList(this.noteDefaultPage)
+      // this.$refs.scroll.closePullDown()
+    },
     //根据路由传递的noteId获取笔记
     getNoteFromRoute(id) {
       this.getNoteContent(id)
@@ -294,31 +345,37 @@ export default {
     },
     //搜索笔记
     searchNote(searchValue, page = 1) {
-      noteServe.getDefaultNote(page, searchValue).then((res) => {
-        if (res.data.data.list.length > 0) {
-          this.searchNoteKey = searchValue
-          page === 1 ? [(this.noteDefaultPage = 1), (this.noteList = [])] : ''
-          for (const item of res.data.data.list) {
-            this.noteList.push(item)
-          }
-          this.noteTotalPage = res.data.data.total_pages
-        } else {
-          this.searchNoteKey = ''
-          this.noteDefaultPage = 1
-          this.$baseFun.__message('未搜索到相关内容')
-          this.getNoteList(1)
-        }
+      this.loadOption = 'search'
+      let params = {}
+      //换个关键字搜索 置空列表
+      if (searchValue !== this.searchNoteKey) {
+        this.noteList = []
+      }
+      page === 1 ? (this.noteDefaultPage = 1) : ''
+      params.search = searchValue
+      params.page = page
+      noteServe.getDefaultNote(params).then((res) => {
+        this.searchNoteKey = searchValue
+        this.noteTotalPage = res.data.data.total_pages
+        this.judgeData(res.data.data.list)
       })
     },
     //上拉加载
     pullUpLoad() {
-      if (this.noteDefaultPage <= this.noteDefaultPage)
-        this.noteDefaultPage += 1
-      if (this.searchValue) {
-        //判断searchValue是否有值，无时为所有笔记列表加载，有时是搜索笔记加载
-        this.searchNote(this.searchNoteKey, this.noteDefaultPage)
-      } else {
-        this.getNoteList(this.noteDefaultPage)
+      if (this.noteDefaultPage >= this.noteDefaultPage)
+        return this.$baseFun.__message('已经到底啦~')
+      this.noteDefaultPage += 1
+      switch (this.loadOption) {
+        case 'note':
+          this.getNoteList(this.noteDefaultPage)
+          break
+        case 'search':
+          this.searchNote(this.searchNoteKey, this.noteDefaultPage)
+          break
+        case 'noteBook':
+          break
+        case 'sign':
+          break
       }
       this.$refs.scroll.closePullUp()
     },
@@ -331,6 +388,7 @@ export default {
       //调用关闭下拉刷新动作
       this.$refs.scroll.closePullDown()
       this.loading = !this.loading
+      this.$baseFun.__message('刷新成功', 'success')
     },
     //  点击了某个笔记
     onCheckNote(index) {
@@ -392,9 +450,11 @@ export default {
       }
     },
     //  确定删除笔记
-    definiteDeleteNote(index) {
-      this.$refs.delNote.close()
-      this.delNote(this.noteList[index].id)
+    definiteDeleteNote(index, option = true) {
+      if (option) {
+        this.$refs.delNote.close()
+        this.delNote(this.noteList[index].id)
+      }
       //删除
       this.noteList.splice(index, 1)
       //判断删除的索引值是否在选中索引之前
@@ -413,6 +473,27 @@ export default {
           that.refresh()
         })
       }, 500)
+    },
+    //将笔记移除列表，但后端不会删除
+    moveNote(noteId) {
+      this.noteList.forEach((item, index) => {
+        if (item.id === noteId) this.definiteDeleteNote(index, false)
+      })
+    },
+    //  判断获取的数据是否有值
+    judgeData(data) {
+      let content = []
+      if (data.length > 0) {
+        this.noteDefaultPage === 1 ? '' : (content = this.noteList)
+        for (const item of data) {
+          content.push(item)
+        }
+        this.noteList = content
+        this.haveNote = true
+      } else {
+        this.haveNote = false
+        this.noteList = []
+      }
     },
   },
 }

@@ -46,5 +46,5 @@ export function compareWidth(width = 0) {
 }
 //  获取笔记本,列表
 export function __getNoteBookList(page = 1) {
-  return noteBookServe.getNoteBook(page).then((res) => res)
+  return noteBookServe.getNoteBook({ page }).then((res) => res)
 }
