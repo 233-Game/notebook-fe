@@ -221,6 +221,7 @@ export default {
       let params = {}
       params.page = page
       noteServe.getDefaultNote(params).then((res) => {
+        console.log(res)
         this.noteTotalPage = res.data.data.total_pages
         //没有笔记时
         this.judgeData(res.data.data.list)
@@ -239,6 +240,10 @@ export default {
     //收藏笔记
     function collectNote(noteId) {
       return noteServe.collectNote(noteId).then((res) => res)
+    }
+    //取消收藏笔记
+    function cancelCollect(noteId) {
+      return noteServe.cancelCollectNote(noteId).then((res) => res)
     }
     //  获取笔记本中的笔记
     function getNoteInNoteBook(noteBookId, page) {
@@ -267,6 +272,7 @@ export default {
       getNoteContent,
       collectNote,
       getNoteInNoteBook,
+      cancelCollect,
     }
   },
   computed: {
@@ -407,7 +413,7 @@ export default {
     },
     //  判断是否收藏
     isCollect(data) {
-      if (data.collect === 1) {
+      if (data.collect) {
         return '#iconshoucang'
       }
       return '#iconshoucang1'
@@ -422,11 +428,16 @@ export default {
           break
         case 1:
           //收藏
-          this.collectNote(this.noteList[index].id).then(() => {
-            this.noteList[index].collect === 1
-              ? (this.noteList[index].collect = 0)
-              : (this.noteList[index].collect = 1)
-          })
+          if (!this.noteList[index].collect) {
+            this.noteList[index].collect = true
+            // 收藏
+            this.collectNote(this.noteList[index].id)
+          } else {
+            this.noteList[index].collect = false
+            // 取消收藏
+            this.cancelCollect(this.noteList[index].id)
+          }
+
           break
         case 2:
           this.$refs.delNote.open(index)

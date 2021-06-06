@@ -13,8 +13,12 @@ export default class noteServe {
     return request.get(`/source/list`, params).then((res) => res)
   }
   //  收藏笔记<缺url>
-  static collectNote(params = {}) {
-    return request.post('/source/star', params)
+  static collectNote(noteId) {
+    return request.post('/source/star', { id: noteId })
+  }
+  //取消收藏
+  static cancelCollectNote(noteId) {
+    return request.post('/source/unStar', { id: noteId })
   }
   //  获取单个笔记详情
   static getNoteContent(noteId) {
