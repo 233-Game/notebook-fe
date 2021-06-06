@@ -157,7 +157,7 @@ import { compareWidth } from '../../../common/commonFunction'
 import noteServe from '@/api/noteApi'
 import Clipboard from 'clipboard'
 import Tip from '@/components/panel/Tip'
-import noteBookServe from '@/api/noteBookApi'
+// import signServe from "@/api/signApi";
 export default {
   name: 'Note',
   components: {
@@ -253,13 +253,13 @@ export default {
       })
     }
     //  获取标签中的笔记
-    function getNoteInSign(signId, page) {
-      this.loadOption = 'sign'
-      this.noteList = []
-      noteBookServe.getNoteInSign(signId, page).then((res) => {
-        this.noteList = res.data.data.list()
-      })
-    }
+    // function getNoteInSign(signId, page) {
+    //   this.loadOption = 'sign'
+    //   this.noteList = []
+    //   noteBookServe.getNoteInSign(signId, page).then((res) => {
+    //     this.noteList = res.data.data.list()
+    //   })
+    // }
     return {
       sortLi,
       iconList,
@@ -267,7 +267,6 @@ export default {
       getNoteContent,
       collectNote,
       getNoteInNoteBook,
-      getNoteInSign,
     }
   },
   computed: {
@@ -300,6 +299,18 @@ export default {
     this.$config.noteReload = this
   },
   methods: {
+    //  获取标签中的笔记
+    async getNoteInSign(signId, page) {
+      console.log(signId, page)
+      this.loadOption = 'sign'
+      this.noteList = []
+      let params = {}
+      params.tag_id = signId
+      params.page = page
+      await noteServe.getDefaultNote(params).then((res) => {
+        this.noteList = res.data.data.list
+      })
+    },
     delNote(noteId) {
       noteServe.delNote(noteId).then((res) => {
         console.log(res)

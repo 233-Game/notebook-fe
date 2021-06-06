@@ -1,6 +1,7 @@
 <template>
   <div>
     <drawer
+      ref="drawer"
       :drawer="signDrawer"
       @closeDrawer="closeDrawer"
       head-title="标签"
@@ -225,7 +226,11 @@ export default {
       })
     },
     selectNote(data) {
-      console.log(data)
+      console.log('----', data)
+      this.$router.push(
+        `/index/note?signId=${this.currentSign.id}&name=${this.currentSign.name}`
+      )
+      this.$refs.drawer.closeDrawer()
     },
     pullDownRush() {
       setTimeout(() => {
