@@ -12,94 +12,58 @@
 
       <!-- 自定义头像 -->
       <div v-else class="photo">
-        <img :src="userInfo.avatar" alt="" />
+        <img :src="webUrl + userInfo.avatar" alt="" />
       </div>
     </div>
 
-    <!-- 主要功能 -->
-    <div class="mainFunction flex_column_ACenter">
-      <el-row class="flex_column_ACenter">
+    <!-- 功能按键 -->
+    <div class="mainFunction">
+      <el-row v-for="(btn, index) in sideBarList" :key="index">
         <el-tooltip
           :hide-after="0"
           class="item"
           effect="dark"
-          content="新建笔记"
-          placement="right"
-        >
-          <el-button class="elBtn" icon="el-icon-plus" circle></el-button>
-        </el-tooltip>
-      </el-row>
-    </div>
-    <!-- 辅助功能 -->
-    <div class="mainFunction flex_column_ACenter">
-      <el-row class="flex_column_ACenter" style="fontsize: 30px">
-        <el-tooltip
-          :hide-after="0"
-          class="item"
-          effect="dark"
-          content="快捷方式"
+          :content="btn.tipMsg"
           placement="right"
         >
           <el-button
             class="elBtn"
-            icon="el-icon-folder-opened"
+            :icon="btn.icon"
             circle
+            :class="currentBtnIndex === index ? 'isCheckBtn' : ''"
+            @click="checkBtn(index)"
+            @dblclick="dbTap(index)"
           ></el-button>
-        </el-tooltip>
-
-        <el-tooltip
-          :hide-after="0"
-          class="item"
-          effect="dark"
-          content="笔记"
-          placement="right"
-        >
-          <el-button class="elBtn" icon="el-icon-document" circle></el-button>
-        </el-tooltip>
-
-        <el-tooltip
-          :hide-after="0"
-          class="item"
-          effect="dark"
-          content="笔记本"
-          placement="right"
-        >
-          <el-button class="elBtn" icon="el-icon-reading" circle></el-button>
-        </el-tooltip>
-
-        <el-tooltip
-          :hide-after="0"
-          class="item"
-          effect="dark"
-          content="标签"
-          placement="right"
-        >
-          <el-button class="elBtn" icon="el-icon-discount" circle></el-button>
         </el-tooltip>
       </el-row>
     </div>
   </div>
 </template>
 <script>
-import { mapGetters } from 'vuex'
 import { reactive } from 'vue'
+import { getMap } from '../../../common/setStore'
 
 export default {
   name: 'SideBar',
   data() {
-    return {}
+    return {
+      currentBtnIndex: this.$eNum.sideBtnDefault,
+      //网络根路径
+      webUrl: process.env.VUE_APP_PROXY_PATH,
+    }
   },
   created() {
     //  获取用户信息
     this.getUserInfo()
   },
   computed: {
-    ...mapGetters(['getTheme']),
     cssVars() {
       // 状态管理修改颜色==
       return {
-        '--font_color': this.getTheme.IconFontColor,
-        '--theme_color': this.getTheme.ThemeColor,
+        '--font_color': getMap('IconFontColor'),
+        '--theme_color': getMap('ThemeColor'),
+        '--icon_font_bgc': getMap('IconFontBGC'),
+        '--icon_border_color': getMap('IconBorderColor'),
       }
     },
   },
@@ -107,11 +71,29 @@ export default {
     setUser() {
       this.$emit('setUsePanel')
     },
+    checkBtn(index) {
+      this.currentBtnIndex = index
+      this.$emit('tapSideBar', index)
+    },
+    //  双击事件
+    dbTap(index) {
+      if (index === 2) {
+        this.$config.noteReload.reload()
+      }
+    },
   },
   setup() {
     const userInfo = reactive({
       userInfo: {},
     })
+    //左边功能按钮集
+    const sideBarList = reactive([
+      { tipMsg: '新建笔记', icon: 'el-icon-plus' },
+      { tipMsg: '文件夹', icon: 'el-icon-folder-opened' },
+      { tipMsg: '笔记', icon: 'el-icon-document' },
+      { tipMsg: '笔记本', icon: 'el-icon-reading' },
+      { tipMsg: '标签', icon: 'el-icon-discount' },
+    ])
 
     //  获取用户信息
     function getUserInfo() {
@@ -123,11 +105,12 @@ export default {
     return {
       userInfo,
       getUserInfo,
+      sideBarList,
     }
   },
 }
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
 @import '../../../static/style/base';
 
 .SideBar {
@@ -137,8 +120,8 @@ export default {
   height: calc(100vh - 10px);
   background-color: var(--theme_color);
   padding-top: 15px;
+  z-index: 35;
 }
-
 // 自定义头像
 .photo {
   width: 45px;
@@ -155,11 +138,25 @@ export default {
 // 主要功能
 .mainFunction {
   margin-top: 50px;
-
+  .el-row:first-child {
+    margin-bottom: 50px;
+  }
   .elBtn {
     margin: 10px 0;
     font-size: 19px;
     color: var(--font_color);
+  }
+  .elBtn:hover {
+    background-color: var(--icon_font_bgc);
+    border-color: var(--icon_border_color);
+  }
+  .isCheckBtn {
+    background-color: var(--icon_font_bgc) !important;
+    border-color: var(--icon_border_color) !important;
+  }
+  .el-button:focus {
+    border-color: #dfe1e8;
+    background-color: #ffffff;
   }
 }
 </style>

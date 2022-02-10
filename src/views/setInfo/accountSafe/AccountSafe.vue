@@ -57,5 +57,6 @@ export default {
 .main {
   flex: 1;
   height: 100%;
+  margin-left: 10px;
 }
 </style>

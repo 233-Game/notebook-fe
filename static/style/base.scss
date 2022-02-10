@@ -1,3 +1,6 @@
+ul,li {
+    list-style: none;
+}
 .flex_column_ACenter{
     display: flex;
     flex-direction: column;
@@ -30,3 +33,29 @@
     font-size: 14px!important;
     color: #999999;
 }
+.color_87{
+    color: #878787;
+}
+.font_size_18{
+    font-size: 18px;
+}
+.font_size_16{
+    font-size: 16px;
+}
+.font_size_30{
+    font-size: 30px;
+}
+//文字不可选中
+.userSelect {
+    user-select: none;
+}
+//scroll
+.better-scroll {
+    position: relative;
+    box-shadow: none !important;
+    border-top: none !important;
+    width: 100%;
+    padding: 0 !important;
+}
+
+

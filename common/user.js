@@ -1,19 +1,10 @@
 import Router from '@/router'
+import baseFun from './baseFun'
 export default {
   // userInfo:localStorage.getItem("userInfo"),
-  userInfo: {
-    name: 'Jack',
-    //头像
-    avatar: '',
-    phone: '18720427542',
-    email: '2624302837@qq.com',
-    password: '123123',
-    sex: '2',
-    //签名
-    sign: '',
-  },
+  userInfo: {},
   //    用户是否登录
-  token: false,
+  token: '',
   //    验证路由
   checkRouter(info) {
     if (this.token) {
@@ -21,5 +12,10 @@ export default {
     } else {
       Router.push('/login')
     }
+  },
+  //  设置用户信息
+  updateUserInfo() {
+    this.userInfo = JSON.parse(baseFun.getStorage('animalsUserInfo'))
+    this.token = baseFun.getStorage('animalsToken')
   },
 }

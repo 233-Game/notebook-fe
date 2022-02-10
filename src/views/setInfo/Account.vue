@@ -11,7 +11,7 @@
 
       <!-- 自定义头像 -->
       <div v-else class="photo">
-        <img :src="userInfo.avatar" alt="" />
+        <img :src="webUrl + userInfo.avatar" alt="" />
       </div>
       <span class="username">
         {{ userInfo.name }}
@@ -55,16 +55,19 @@
       </div>
     </div>
     <!--      修改-->
-    <el-row>
+    <div class="btn flex_ACenter">
+      <el-button @click="loginOut()" class="loginout" type="info" round
+        >退出登录
+      </el-button>
       <el-button
         @click="submit"
+        class="save"
         :disabled="isBtn"
-        class="btn"
-        type="primary"
+        type="info"
         round
         >保存
       </el-button>
-    </el-row>
+    </div>
   </div>
 </template>
 
@@ -79,9 +82,11 @@ export default {
       sign: '',
       isBtn: true,
       userInfo: {},
+      webUrl: process.env.VUE_APP_PROXY_PATH,
     }
   },
   created() {
+    console.log(this.webUrl)
     this.$nextTick(() => {
       isWatch = true
       that = this
@@ -119,13 +124,19 @@ export default {
         console.log(this.userInfo)
       }
     },
+    //退出登录
+    loginOut() {
+      this.$baseFun.removeStorage('animalsToken')
+      this.$baseFun.removeStorage('animalsUserInfo')
+      this.$user.updateUserInfo()
+      this.$router.push('/login')
+    },
   },
 }
 </script>
 
 <style lang="scss" scoped>
 @import '../../../static/style/base';
-@import '../../../static/style/setPanel';
 // 自定义头像
 .photo {
   width: 45px;
@@ -148,7 +159,7 @@ export default {
 .basicInfo {
   margin: 20px 0 0 0;
   width: calc(100% - 40px);
-  height: $panelHeight/2;
+  height: 50%;
   background-color: #fff;
   padding: 20px;
 
@@ -169,7 +180,6 @@ export default {
 }
 
 .btn {
-  background-color: #4e6cae;
   position: fixed;
   right: 40px;
   margin-top: 20px;
